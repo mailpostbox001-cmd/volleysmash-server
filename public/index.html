@@ -2,90 +2,50 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <!-- Виправлений метатег: прибрано orientation=landscape, що викликав помилку у WebView -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VolleySmash - Telegram Mini App</title>
     
-    <!-- Підключення офіційного API Telegram -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #e0f2fe; 
-            color: #fff;
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-            touch-action: none;
+            margin: 0; padding: 0; background-color: #e0f2fe; color: #fff;
+            font-family: 'Courier New', Courier, monospace; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; width: 100vw; touch-action: none; user-select: none;
             -webkit-user-select: none;
-            user-select: none;
         }
         
         #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            max-width: calc(100vh * (16 / 9));
-            max-height: calc(100vw * (9 / 16));
+            position: relative; width: 100vw; height: 100vh;
+            max-width: calc(100vh * (16 / 9)); max-height: calc(100vw * (9 / 16));
             background: linear-gradient(to bottom, #e0f2fe 0%, #7dd3fc 40%, #0ea5e9 70%, #0369a1 100%);
-            box-shadow: 0 0 20px #0284c7; 
-            overflow: hidden;
+            box-shadow: 0 0 20px #0284c7; overflow: hidden;
         }
         
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+        canvas { display: block; width: 100%; height: 100%; }
         
         .overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(2, 6, 23, 0.85); 
-            z-index: 10;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(2, 6, 23, 0.85); z-index: 10;
         }
         
         h1 {
-            color: #fef08a;
-            text-shadow: 0 0 10px #f97316, 0 0 20px #e55c7a;
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            text-align: center;
+            color: #fef08a; text-shadow: 0 0 10px #f97316, 0 0 20px #e55c7a;
+            font-size: 3.5rem; margin-bottom: 20px; text-align: center;
         }
         
         .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 80%;
-            max-width: 400px;
+            display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 400px;
         }
 
-        /* Примусове скидання стандартних стилів браузера для кнопок */
         button {
-            appearance: none;
-            -webkit-appearance: none;
-            background: rgba(26, 11, 46, 0.8) !important;
-            border: 2px solid #0ea5e9 !important;
-            color: #0ea5e9 !important;
-            padding: 12px 20px;
-            font-size: 1.2rem;
-            font-family: inherit;
-            cursor: pointer;
-            text-transform: uppercase;
-            box-shadow: 0 0 10px #0ea5e9 inset !important;
-            transition: 0.2s;
-            border-radius: 8px;
+            appearance: none; -webkit-appearance: none;
+            background: rgba(26, 11, 46, 0.8) !important; border: 2px solid #0ea5e9 !important;
+            color: #0ea5e9 !important; padding: 12px 20px; font-size: 1.2rem;
+            font-family: inherit; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 0 10px #0ea5e9 inset !important; transition: 0.2s; border-radius: 8px;
         }
         button:active { background: #0ea5e9 !important; color: #fff !important; }
         .btn-white { border-color: #e0f2fe !important; color: #e0f2fe !important; box-shadow: 0 0 10px #e0f2fe inset !important; }
@@ -94,48 +54,41 @@
         .hidden { display: none !important; }
 
         #btnInGameMenu, #btnPause {
-            position: absolute;
-            top: 20px;
-            padding: 8px 16px; font-size: 1rem; z-index: 8; 
+            position: absolute; top: 20px; padding: 8px 16px; font-size: 1rem; z-index: 8; 
             border-color: #0284c7 !important; color: #0284c7 !important;
-            background: rgba(255, 255, 255, 0.5) !important;
-            box-shadow: none !important;
+            background: rgba(255, 255, 255, 0.5) !important; box-shadow: none !important;
         }
-        #btnInGameMenu { left: 20px; }
-        #btnPause { right: 20px; }
+        #btnInGameMenu { left: 20px; } #btnPause { right: 20px; }
         
         .controls-container {
-            position: absolute;
-            bottom: 20px; left: 0; width: 100%;
-            display: flex; padding: 0 5%;
-            box-sizing: border-box; z-index: 5;
+            position: absolute; bottom: 20px; left: 0; width: 100%;
+            display: flex; padding: 0 5%; box-sizing: border-box; z-index: 5;
             pointer-events: none; justify-content: space-between; 
         }
 
         .touch-btn {
-            pointer-events: auto;
-            width: 18vh; height: 18vh;
-            min-width: 80px; min-height: 80px;
-            max-width: 130px; max-height: 130px;
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 5vh; user-select: none;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.5); 
-            color: rgba(255, 255, 255, 0.9);
+            pointer-events: auto; width: 18vh; height: 18vh;
+            min-width: 80px; min-height: 80px; max-width: 130px; max-height: 130px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 5vh; user-select: none; background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5); color: rgba(255, 255, 255, 0.9);
         }
         .left-right-group { display: flex; gap: 15px; }
 
         #rotatePrompt {
-            display: none; position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #e0f2fe; color: #0284c7;
-            z-index: 100; flex-direction: column;
+            display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #e0f2fe; color: #0284c7; z-index: 100; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
         }
         @media (orientation: portrait) {
-            #rotatePrompt { display: flex; }
-            #gameContainer { display: none; }
+            #rotatePrompt { display: flex; } #gameContainer { display: none; }
+        }
+
+        /* Поле вводу коду */
+        #roomCodeInput {
+            padding: 12px; font-size: 1.5rem; text-align: center; text-transform: uppercase;
+            font-weight: bold; background: rgba(255,255,255,0.9); border: 2px solid #0ea5e9;
+            border-radius: 8px; font-family: inherit; color: #020617; outline: none;
         }
     </style>
 </head>
@@ -154,15 +107,33 @@
 
     <div id="menuScreen" class="overlay">
         <h1>VOLLEY SMASH</h1>
+        
+        <!-- Головне меню -->
         <div class="menu-buttons" id="mainMenuBtns">
             <button onclick="showDifficulty()">Грати проти ШІ (PvE)</button>
-            <button class="btn-white" onclick="startOnline()">Онлайн Гра</button>
+            <button class="btn-white" onclick="showOnlineMenu()">Онлайн Гра з другом</button>
         </div>
+        
+        <!-- Меню складності -->
         <div class="menu-buttons hidden" id="diffMenuBtns">
             <button onclick="startGame('ai', 'easy')">Складність: Легко</button>
             <button onclick="startGame('ai', 'normal')">Складність: Нормально</button>
             <button onclick="startGame('ai', 'hard')">Складність: Важко</button>
             <button class="btn-white" onclick="hideDifficulty()">← Назад</button>
+        </div>
+
+        <!-- Меню онлайну (Створити / Увійти) -->
+        <div class="menu-buttons hidden" id="onlineMenuBtns">
+            <button onclick="createRoom()">Створити кімнату</button>
+            <button onclick="showJoinMenu()">Увійти за кодом</button>
+            <button class="btn-white" onclick="hideOnlineMenu()">← Назад</button>
+        </div>
+
+        <!-- Введення коду -->
+        <div class="menu-buttons hidden" id="joinMenuBtns">
+            <input type="text" id="roomCodeInput" placeholder="Код (напр. AX55)" maxlength="5">
+            <button onclick="joinRoom()">Підключитись</button>
+            <button class="btn-white" onclick="hideJoinMenu()">← Назад</button>
         </div>
     </div>
 
@@ -176,7 +147,7 @@
 
     <div id="gameOverScreen" class="overlay hidden">
         <h1 id="winnerText">WINNER!</h1>
-        <p id="finalScore" style="font-size: 1.5rem; margin-bottom: 20px; color: #fef08a;"></p>
+        <p id="finalScore" style="font-size: 1.5rem; margin-bottom: 20px; color: #fef08a; text-align: center;"></p>
         <button onclick="returnToMenu()">В Головне Меню</button>
     </div>
 
@@ -192,70 +163,44 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-    // --- Ініціалізація Telegram Web App ---
     let tg = window.Telegram.WebApp;
-    tg.expand(); // Розгортаємо гру на весь екран
-    tg.ready();  // Кажемо Telegram, що ми завантажились
+    tg.expand(); 
+    tg.ready();  
 
-    // --- Налаштування Socket.IO ---
     const socket = io();
     let myRole = null; 
-    let roomId = 'main-room'; 
+    let roomId = null; 
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    let audioCtx = null;
-    let bgmInterval = null;
-    let bgmStep = 0;
-    
+    let audioCtx = null; let bgmInterval = null; let bgmStep = 0;
     function initAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
     
     function playNote(freq, type, startTime, duration, vol) {
-        if(!audioCtx) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        if(!audioCtx) return; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.type = type; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(vol, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        gain.gain.setValueAtTime(vol, startTime); gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
         osc.start(startTime); osc.stop(startTime + duration);
     }
 
     function playSound(type) {
-        if (!audioCtx) return;
-        const now = audioCtx.currentTime;
-        
-        if (type === 'jump') {
-            playNote(300, 'sine', now, 0.15, 0.1);
-            playNote(400, 'sine', now+0.05, 0.1, 0.05);
-        } else if (type === 'hit') {
-            playNote(600, 'square', now, 0.1, 0.15);
-        } else if (type === 'wall') {
-            playNote(250, 'triangle', now, 0.1, 0.1);
-        } else if (type === 'score') {
-            playNote(300, 'sawtooth', now, 0.4, 0.2);
-            playNote(150, 'sawtooth', now+0.1, 0.3, 0.2);
-        } else if (type === 'set_win') {
-            playNote(440, 'square', now, 0.15, 0.1); 
-            playNote(554, 'square', now + 0.15, 0.3, 0.1); 
-        } else if (type === 'match_win') {
-            playNote(440, 'square', now, 0.15, 0.15); 
-            playNote(554, 'square', now + 0.15, 0.15, 0.15); 
-            playNote(659, 'square', now + 0.30, 0.15, 0.15); 
-            playNote(880, 'square', now + 0.45, 0.4, 0.15);  
-        } else if (type === 'whistle') {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(2000, now);
-            osc.frequency.linearRampToValueAtTime(2400, now + 0.3);
-            gain.gain.setValueAtTime(0.1, now);
-            gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+        if (!audioCtx) return; const now = audioCtx.currentTime;
+        if (type === 'jump') { playNote(300, 'sine', now, 0.15, 0.1); playNote(400, 'sine', now+0.05, 0.1, 0.05); } 
+        else if (type === 'hit') { playNote(600, 'square', now, 0.1, 0.15); } 
+        else if (type === 'wall') { playNote(250, 'triangle', now, 0.1, 0.1); } 
+        else if (type === 'score') { playNote(300, 'sawtooth', now, 0.4, 0.2); playNote(150, 'sawtooth', now+0.1, 0.3, 0.2); } 
+        else if (type === 'set_win') { playNote(440, 'square', now, 0.15, 0.1); playNote(554, 'square', now + 0.15, 0.3, 0.1); } 
+        else if (type === 'match_win') { playNote(440, 'square', now, 0.15, 0.15); playNote(554, 'square', now + 0.15, 0.15, 0.15); playNote(659, 'square', now + 0.30, 0.15, 0.15); playNote(880, 'square', now + 0.45, 0.4, 0.15); } 
+        else if (type === 'whistle') {
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
+            osc.frequency.setValueAtTime(2000, now); osc.frequency.linearRampToValueAtTime(2400, now + 0.3);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
             osc.start(now); osc.stop(now + 0.4);
         }
     }
@@ -265,16 +210,10 @@
         const notes = [329.63, 392.00, 440.00, 523.25, 659.25, 523.25, 440.00, 392.00]; 
         bgmStep = 0;
         bgmInterval = setInterval(() => {
-            if (gameState === 'playing' && audioCtx) {
-                playNote(notes[bgmStep % notes.length], 'triangle', audioCtx.currentTime, 0.4, 0.015);
-                bgmStep++;
-            }
+            if (gameState === 'playing' && audioCtx) { playNote(notes[bgmStep % notes.length], 'triangle', audioCtx.currentTime, 0.4, 0.015); bgmStep++; }
         }, 350); 
     }
-
-    function stopBGM() {
-        if (bgmInterval) clearInterval(bgmInterval);
-    }
+    function stopBGM() { if (bgmInterval) clearInterval(bgmInterval); }
 
     socket.on('playerRole', (role) => { myRole = role; });
 
@@ -287,32 +226,22 @@
         
         p1.isAI = false; p2.isAI = false; 
         score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 };
-        p1.x = p1.startX; p2.x = p2.startX;
-        p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
-        particles = [];
-        ball.reset(1);
-        gameState = 'playing';
-        playSound('whistle');
-        startBGM(); 
+        p1.x = p1.startX; p2.x = p2.startX; p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
+        particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); startBGM(); 
     });
 
     socket.on('updateOpponent', (data) => {
         let opp = data.role === 'p1' ? p1 : p2;
-        opp.x = data.x; opp.y = data.y;
-        opp.tilt = data.tilt; opp.squash = data.squash; opp.stretch = data.stretch;
+        opp.x = data.x; opp.y = data.y; opp.tilt = data.tilt; opp.squash = data.squash; opp.stretch = data.stretch;
     });
 
     socket.on('updateBall', (data) => {
-        if (myRole === 'p2') { 
-            ball.x = data.x; ball.y = data.y;
-            ball.vx = data.vx; ball.vy = data.vy;
-        }
+        if (myRole === 'p2') { ball.x = data.x; ball.y = data.y; ball.vx = data.vx; ball.vy = data.vy; }
     });
 
     socket.on('syncState', (data) => {
         if (myRole === 'p2') {
-            score = data.score; sets = data.sets;
-            p1.radius = data.p1Radius; p2.radius = data.p2Radius;
+            score = data.score; sets = data.sets; p1.radius = data.p1Radius; p2.radius = data.p2Radius;
             if (data.sound) playSound(data.sound);
             if (data.isGameOver) checkMatchWin(data.winner);
         }
@@ -320,40 +249,19 @@
     
     socket.on('gameEvent', (data) => {
         if (myRole === 'p2') {
-            if (data.type === 'hit') {
-                playSound('hit');
-                let p = data.pName === 'p1' ? p1 : p2;
-                p.hitTimer = 5;
-                spawnDust(ball.x, ball.y + ball.radius, 5);
-            }
+            if (data.type === 'hit') { playSound('hit'); let p = data.pName === 'p1' ? p1 : p2; p.hitTimer = 5; spawnDust(ball.x, ball.y + ball.radius, 5); }
             if (data.type === 'wall') playSound('wall');
-            if (data.type === 'jump') {
-                playSound('jump');
-                let p = data.pName === 'p1' ? p1 : p2;
-                spawnDust(p.x, p.y + p.radius);
-            }
+            if (data.type === 'jump') { playSound('jump'); let p = data.pName === 'p1' ? p1 : p2; spawnDust(p.x, p.y + p.radius); }
         }
     });
 
     let particles = [];
     class Dust {
-        constructor(x, y) {
-            this.x = x; this.y = y;
-            this.vx = (Math.random() - 0.5) * 4;
-            this.vy = Math.random() * -3;
-            this.life = 1.0;
-            this.size = Math.random() * 8 + 4;
-        }
+        constructor(x, y) { this.x = x; this.y = y; this.vx = (Math.random() - 0.5) * 4; this.vy = Math.random() * -3; this.life = 1.0; this.size = Math.random() * 8 + 4; }
         update() { this.x += this.vx; this.y += this.vy; this.life -= 0.05; }
-        draw() {
-            ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`; 
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
-        }
+        draw() { ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
     }
-
-    function spawnDust(x, y, count=10) {
-        for(let i=0; i<count; i++) particles.push(new Dust(x, y));
-    }
+    function spawnDust(x, y, count=10) { for(let i=0; i<count; i++) particles.push(new Dust(x, y)); }
 
     const GRAVITY = 0.6; const PTS_TO_WIN_SET = 7; const SETS_TO_WIN_MATCH = 3;
     let gameState = 'menu'; let difficulty = 'normal';
@@ -362,73 +270,41 @@
 
     class Player {
         constructor(x, color, isAI = false) {
-            this.startX = x; this.x = x; this.y = 350;
-            this.baseRadius = 45; this.radius = this.baseRadius;
-            this.vx = 0; this.vy = 0; this.jumpPower = -12;
-            this.color = color; this.isAI = isAI; this.isGrounded = true;
-            this.speed = 5.5; this.squash = 1; this.stretch = 1;
-            this.tilt = 0; this.hitTimer = 0;
+            this.startX = x; this.x = x; this.y = 350; this.baseRadius = 45; this.radius = this.baseRadius;
+            this.vx = 0; this.vy = 0; this.jumpPower = -12; this.color = color; this.isAI = isAI; this.isGrounded = true;
+            this.speed = 5.5; this.squash = 1; this.stretch = 1; this.tilt = 0; this.hitTimer = 0;
         }
 
         updateAI(ball) {
             let aiSpeed = 4.5; let reactionDistance = 70; let jumpChance = 1;
             if (difficulty === 'easy') { aiSpeed = 3.5; reactionDistance = 50; jumpChance = 0.5; } 
             else if (difficulty === 'hard') { aiSpeed = 6.5; reactionDistance = 100; jumpChance = 1; }
-
             if (ball.x > 400) { 
-                if (this.x < ball.x - 5) this.vx = aiSpeed;
-                else if (this.x > ball.x + 5) this.vx = -aiSpeed;
-                else this.vx = 0;
-
+                if (this.x < ball.x - 5) this.vx = aiSpeed; else if (this.x > ball.x + 5) this.vx = -aiSpeed; else this.vx = 0;
                 if (ball.y > 100 && ball.y < 320 && this.isGrounded && Math.abs(this.x - ball.x) < reactionDistance) {
-                    if (Math.random() <= jumpChance) {
-                        this.vy = this.jumpPower; this.isGrounded = false;
-                        spawnDust(this.x, this.y + this.radius); playSound('jump');
-                    }
+                    if (Math.random() <= jumpChance) { this.vy = this.jumpPower; this.isGrounded = false; spawnDust(this.x, this.y + this.radius); playSound('jump'); }
                 }
-            } else {
-                if (this.x < 600) this.vx = aiSpeed;
-                else if (this.x > 620) this.vx = -aiSpeed;
-                else this.vx = 0;
-            }
+            } else { if (this.x < 600) this.vx = aiSpeed; else if (this.x > 620) this.vx = -aiSpeed; else this.vx = 0; }
         }
 
         update(ball, isLocalControl = true) {
             if (this.isAI && isLocalControl) this.updateAI(ball);
             if (isLocalControl || this.isAI) {
-                this.vy += GRAVITY; this.x += this.vx; this.y += this.vy;
-                this.tilt = this.vx * 0.03;
-
-                if (!this.isGrounded) { this.stretch = 1.1; this.squash = 0.9; } 
-                else { this.stretch += (1 - this.stretch) * 0.2; this.squash += (1 - this.squash) * 0.2; }
-
+                this.vy += GRAVITY; this.x += this.vx; this.y += this.vy; this.tilt = this.vx * 0.03;
+                if (!this.isGrounded) { this.stretch = 1.1; this.squash = 0.9; } else { this.stretch += (1 - this.stretch) * 0.2; this.squash += (1 - this.squash) * 0.2; }
                 if (this.hitTimer > 0) { this.stretch = 0.8; this.squash = 1.2; this.hitTimer--; }
-
                 if (this.y + this.radius >= canvas.height) {
-                    if (!this.isGrounded && this.vy > 5) {
-                        spawnDust(this.x, canvas.height); this.stretch = 0.8; this.squash = 1.2; 
-                    }
+                    if (!this.isGrounded && this.vy > 5) { spawnDust(this.x, canvas.height); this.stretch = 0.8; this.squash = 1.2; }
                     this.y = canvas.height - this.radius; this.vy = 0; this.isGrounded = true;
                 } else { this.isGrounded = false; }
-
-                if (this.x < net.x) {
-                    if (this.x - this.radius < 0) this.x = this.radius;
-                    if (this.x + this.radius > net.x) this.x = net.x - this.radius;
-                } else {
-                    if (this.x - this.radius < net.x + net.width) this.x = net.x + net.width + this.radius;
-                    if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius;
-                }
+                if (this.x < net.x) { if (this.x - this.radius < 0) this.x = this.radius; if (this.x + this.radius > net.x) this.x = net.x - this.radius; } 
+                else { if (this.x - this.radius < net.x + net.width) this.x = net.x + net.width + this.radius; if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius; }
             }
         }
-
         draw() {
-            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.tilt);
-            if (this.startX < 400) ctx.scale(-1, 1);
-            ctx.scale(this.squash, this.stretch);
-            ctx.font = `${this.radius * 1.6}px Arial`;
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.shadowBlur = 20; ctx.shadowColor = this.color;
-            ctx.fillText('🐧', 0, 5); ctx.restore();
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.tilt); if (this.startX < 400) ctx.scale(-1, 1);
+            ctx.scale(this.squash, this.stretch); ctx.font = `${this.radius * 1.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.fillText('🐧', 0, 5); ctx.restore();
         }
     }
 
@@ -438,10 +314,8 @@
 
         update(p1, p2, isHost = true) {
             if (isHost) { this.vy += GRAVITY * 0.46; this.x += this.vx; this.y += this.vy; }
-
             let speed = Math.abs(this.vx) + Math.abs(this.vy);
-            if (speed > 12) { this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 8) this.trail.shift(); } 
-            else if (this.trail.length > 0) { this.trail.shift(); }
+            if (speed > 12) { this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 8) this.trail.shift(); } else if (this.trail.length > 0) { this.trail.shift(); }
 
             if (isHost) {
                 if (this.lastHitter === p1 && !this.crossedNet && this.x > net.x + net.width) { this.crossedNet = true; p1.radius *= 1.1; } 
@@ -450,75 +324,49 @@
                 if (this.x - this.radius <= 0) { this.x = this.radius; this.vx *= -0.95; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
                 if (this.x + this.radius >= canvas.width) { this.x = canvas.width - this.radius; this.vx *= -0.95; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
                 if (this.y - this.radius <= 0) { this.y = this.radius; this.vy *= -0.95; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
-
                 if (this.x + this.radius > net.x && this.x - this.radius < net.x + net.width && this.y + this.radius > net.y) {
                     if (this.y < net.y + 10) { this.vy *= -0.95; this.y = net.y - this.radius; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); } 
                     else { this.vx *= -1; this.x = this.x < net.x ? net.x - this.radius : net.x + net.width + this.radius; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
                 }
-
                 if (this.y + this.radius >= canvas.height) {
-                    playSound('whistle');
-                    let sndToPlay = 'score'; let isGameOver = false; let winner = '';
-                    let nextServer = 1;
+                    playSound('whistle'); let sndToPlay = 'score'; let isGameOver = false; let winner = ''; let nextServer = 1;
                     if (this.x < net.x) { score.p2++; nextServer = 1; } else { score.p1++; nextServer = 2; }
-
                     if (score.p1 >= PTS_TO_WIN_SET || score.p2 >= PTS_TO_WIN_SET) {
-                        if (score.p1 > score.p2) sets.p1++; else sets.p2++;
-                        score.p1 = 0; score.p2 = 0;
-                        if (sets.p1 >= SETS_TO_WIN_MATCH || sets.p2 >= SETS_TO_WIN_MATCH) {
-                            sndToPlay = 'match_win'; isGameOver = true; winner = sets.p1 >= SETS_TO_WIN_MATCH ? 'p1' : 'p2';
-                        } else { sndToPlay = 'set_win'; }
+                        if (score.p1 > score.p2) sets.p1++; else sets.p2++; score.p1 = 0; score.p2 = 0;
+                        if (sets.p1 >= SETS_TO_WIN_MATCH || sets.p2 >= SETS_TO_WIN_MATCH) { sndToPlay = 'match_win'; isGameOver = true; winner = sets.p1 >= SETS_TO_WIN_MATCH ? 'p1' : 'p2'; } else { sndToPlay = 'set_win'; }
                     }
-
                     playSound(sndToPlay); this.reset(nextServer);
                     p1.x = p1.startX; p1.y = 350; p1.radius = p1.baseRadius; p2.x = p2.startX; p2.y = 350; p2.radius = p2.baseRadius;
-
-                    if (myRole === 'p1') {
-                        socket.emit('syncState', { roomId, score, sets, p1Radius: p1.radius, p2Radius: p2.radius, sound: sndToPlay, isGameOver, winner });
-                    }
+                    if (myRole === 'p1') { socket.emit('syncState', { roomId, score, sets, p1Radius: p1.radius, p2Radius: p2.radius, sound: sndToPlay, isGameOver, winner }); }
                     if (isGameOver) { checkMatchWin(winner); return; }
                 }
                 this.checkPlayerCollision(p1); this.checkPlayerCollision(p2);
             }
         }
-
         checkPlayerCollision(p) {
-            let dx = this.x - p.x; let dy = this.y - p.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
+            let dx = this.x - p.x; let dy = this.y - p.y; let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < this.radius + p.radius) {
-                let angle = Math.atan2(dy, dx);
-                let bounceForce = 11; 
-                this.vx = Math.cos(angle) * bounceForce; this.vy = Math.sin(angle) * bounceForce;
-                if (this.vy > 0) this.vy = -this.vy - 3;
+                let angle = Math.atan2(dy, dx); let bounceForce = 11; 
+                this.vx = Math.cos(angle) * bounceForce; this.vy = Math.sin(angle) * bounceForce; if (this.vy > 0) this.vy = -this.vy - 3;
                 this.speedMultiplier += 0.05; this.vx *= this.speedMultiplier; this.vy *= this.speedMultiplier;
-                
-                let overlap = (this.radius + p.radius) - distance;
-                this.x += Math.cos(angle) * overlap; this.y += Math.sin(angle) * overlap;
-
+                let overlap = (this.radius + p.radius) - distance; this.x += Math.cos(angle) * overlap; this.y += Math.sin(angle) * overlap;
                 this.lastHitter = p; this.crossedNet = false; p.hitTimer = 5; 
                 playSound('hit'); spawnDust(this.x, this.y + this.radius, 5);
                 if (myRole === 'p1') socket.emit('gameEvent', { roomId, type: 'hit', pName: p === p1 ? 'p1' : 'p2' });
             }
         }
-
         draw() {
             for(let i=0; i<this.trail.length; i++) {
                 let t = this.trail[i]; let ratio = (i + 1) / this.trail.length;
-                ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(254, 240, 138, ${0.4 * ratio})`; ctx.fill();
+                ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2); ctx.fillStyle = `rgba(254, 240, 138, ${0.4 * ratio})`; ctx.fill();
             }
             ctx.save(); ctx.translate(this.x, this.y); this.rotation += this.vx * 0.05; ctx.rotate(this.rotation);
-            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#f8fafc'; ctx.shadowBlur = 25; ctx.shadowColor = '#bae6fd'; 
-            ctx.fill(); ctx.closePath();
-            ctx.shadowBlur = 0; ctx.font = `${this.radius * 1.3}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('❄️', 0, 1); ctx.restore();
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fillStyle = '#f8fafc'; ctx.shadowBlur = 25; ctx.shadowColor = '#bae6fd'; 
+            ctx.fill(); ctx.closePath(); ctx.shadowBlur = 0; ctx.font = `${this.radius * 1.3}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('❄️', 0, 1); ctx.restore();
         }
     }
 
     let p1 = new Player(150, '#f97316'); let p2 = new Player(650, '#fef08a', true); let ball = new Ball();
-
     const keys = { a: false, d: false, w: false };
     window.addEventListener('keydown', (e) => {
         let k = e.key; let pRef = (myRole === 'p2') ? p2 : p1;
@@ -527,8 +375,7 @@
         if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') { 
             keys.w = true; 
             if (pRef.isGrounded && gameState === 'playing') {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false;
-                spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
+                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
         }
@@ -546,8 +393,7 @@
             e.preventDefault(); if(gameState !== 'playing') return;
             keys[key] = true; let pRef = (myRole === 'p2') ? p2 : p1;
             if(key==='w' && pRef.isGrounded) {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false;
-                spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
+                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
         };
@@ -558,121 +404,102 @@
 
     addTouch('btnLeftP1', 'a'); addTouch('btnRightP1', 'd'); addTouch('btnJumpP1', 'w');
 
+    // Логіка меню
     function showDifficulty() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('diffMenuBtns').classList.remove('hidden'); }
     function hideDifficulty() { document.getElementById('mainMenuBtns').classList.remove('hidden'); document.getElementById('diffMenuBtns').classList.add('hidden'); }
+    
+    function showOnlineMenu() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('onlineMenuBtns').classList.remove('hidden'); }
+    function hideOnlineMenu() { document.getElementById('mainMenuBtns').classList.remove('hidden'); document.getElementById('onlineMenuBtns').classList.add('hidden'); }
+    function showJoinMenu() { document.getElementById('onlineMenuBtns').classList.add('hidden'); document.getElementById('joinMenuBtns').classList.remove('hidden'); }
+    function hideJoinMenu() { document.getElementById('onlineMenuBtns').classList.remove('hidden'); document.getElementById('joinMenuBtns').classList.add('hidden'); }
 
-    function startOnline() {
-        initAudio(); myRole = null; socket.emit('joinRoom', roomId);
+    // Логіка підключення
+    function generateRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let code = '';
+        for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+        return code;
+    }
+
+    function createRoom() {
+        initAudio(); myRole = null; roomId = generateRoomCode();
+        socket.emit('joinRoom', roomId);
         document.getElementById('menuScreen').classList.add('hidden');
-        document.getElementById('winnerText').innerText = "ОЧІКУВАННЯ СУПЕРНИКА...";
+        document.getElementById('winnerText').innerHTML = `КОД КІМНАТИ: <span style="color:#fff">${roomId}</span><br><br><span style="font-size:1.5rem">ОЧІКУВАННЯ СУПЕРНИКА...</span>`;
+        document.getElementById('finalScore').innerText = "";
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+    }
+
+    function joinRoom() {
+        const input = document.getElementById('roomCodeInput').value.toUpperCase().trim();
+        if (input.length < 3) { alert("Введіть коректний код!"); return; }
+        initAudio(); myRole = null; roomId = input;
+        socket.emit('joinRoom', roomId);
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('winnerText').innerHTML = "ПІДКЛЮЧЕННЯ...";
         document.getElementById('finalScore').innerText = "";
         document.getElementById('gameOverScreen').classList.remove('hidden');
     }
 
     function startGame(mode, diff = 'normal') {
         initAudio(); difficulty = diff; myRole = null; p1.isAI = false; p2.isAI = true; 
-        document.getElementById('controlsP1').classList.remove('hidden');
-        document.getElementById('menuScreen').classList.add('hidden');
-        document.getElementById('gameOverScreen').classList.add('hidden');
-        document.getElementById('btnInGameMenu').classList.remove('hidden');
-        document.getElementById('btnPause').classList.remove('hidden');
-        
-        score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 };
-        p1.x = p1.startX; p2.x = p2.startX; p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
+        document.getElementById('controlsP1').classList.remove('hidden'); document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.remove('hidden'); document.getElementById('btnPause').classList.remove('hidden');
+        score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 }; p1.x = p1.startX; p2.x = p2.startX; p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
         particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); startBGM(); 
     }
 
     function togglePause() {
         if (gameState === 'playing') {
-            gameState = 'paused';
-            document.getElementById('pauseScreen').classList.remove('hidden');
-            document.getElementById('controlsP1').classList.add('hidden');
-            document.getElementById('btnPause').classList.add('hidden');
-            document.getElementById('btnInGameMenu').classList.add('hidden');
-            stopBGM();
+            gameState = 'paused'; document.getElementById('pauseScreen').classList.remove('hidden'); document.getElementById('controlsP1').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.add('hidden'); stopBGM();
         } else if (gameState === 'paused') {
-            gameState = 'playing';
-            document.getElementById('pauseScreen').classList.add('hidden');
-            document.getElementById('controlsP1').classList.remove('hidden');
-            document.getElementById('btnPause').classList.remove('hidden');
-            document.getElementById('btnInGameMenu').classList.remove('hidden');
-            startBGM();
+            gameState = 'playing'; document.getElementById('pauseScreen').classList.add('hidden'); document.getElementById('controlsP1').classList.remove('hidden'); document.getElementById('btnPause').classList.remove('hidden'); document.getElementById('btnInGameMenu').classList.remove('hidden'); startBGM();
         }
     }
 
     function checkMatchWin(networkWinner = null) {
         playSound('whistle'); setTimeout(() => playSound('match_win'), 500); stopBGM();
         let text = myRole ? (networkWinner === myRole ? "ВИ ПЕРЕМОГЛИ!" : "СУПЕРНИК ПЕРЕМІГ!") : (sets.p1 >= SETS_TO_WIN_MATCH ? "ВИ ПЕРЕМОГЛИ!" : "ШІ ПЕРЕМІГ!");
-        gameState = 'gameover';
-        document.getElementById('winnerText').innerText = text;
-        document.getElementById('finalScore').innerText = `Сети: ${sets.p1} - ${sets.p2}`;
-        document.getElementById('gameOverScreen').classList.remove('hidden');
-        document.getElementById('controlsP1').classList.add('hidden');
-        document.getElementById('btnInGameMenu').classList.add('hidden');
-        document.getElementById('btnPause').classList.add('hidden');
+        gameState = 'gameover'; document.getElementById('winnerText').innerText = text; document.getElementById('finalScore').innerText = `Сети: ${sets.p1} - ${sets.p2}`;
+        document.getElementById('gameOverScreen').classList.remove('hidden'); document.getElementById('controlsP1').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden');
     }
 
     function returnToMenu() {
         gameState = 'menu'; stopBGM();
-        document.getElementById('gameOverScreen').classList.add('hidden');
-        document.getElementById('pauseScreen').classList.add('hidden');
-        document.getElementById('btnInGameMenu').classList.add('hidden');
-        document.getElementById('btnPause').classList.add('hidden');
-        document.getElementById('controlsP1').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('pauseScreen').classList.add('hidden');
+        document.getElementById('btnInGameMenu').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden'); document.getElementById('controlsP1').classList.add('hidden');
+        
+        document.getElementById('diffMenuBtns').classList.add('hidden');
+        document.getElementById('onlineMenuBtns').classList.add('hidden');
+        document.getElementById('joinMenuBtns').classList.add('hidden');
+        document.getElementById('mainMenuBtns').classList.remove('hidden');
         document.getElementById('menuScreen').classList.remove('hidden');
-        hideDifficulty();
     }
 
     function drawScore() {
-        ctx.font = 'bold 50px Courier New'; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.textAlign = 'center';
-        ctx.fillText(`${score.p1} - ${score.p2}`, canvas.width / 2, 70);
+        ctx.font = 'bold 50px Courier New'; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.textAlign = 'center'; ctx.fillText(`${score.p1} - ${score.p2}`, canvas.width / 2, 70);
         ctx.font = '20px Courier New'; ctx.fillStyle = '#fef08a'; ctx.fillText(`СЕТИ: ${sets.p1} - ${sets.p2}`, canvas.width / 2, 30);
     }
-
     function drawNet() {
-        ctx.fillStyle = '#f8fafc'; ctx.shadowBlur = 15; ctx.shadowColor = '#0ea5e9';
-        ctx.fillRect(net.x, net.y, net.width, net.height);
-        ctx.beginPath(); ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2); ctx.fill(); ctx.closePath();
-        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#f8fafc'; ctx.shadowBlur = 15; ctx.shadowColor = '#0ea5e9'; ctx.fillRect(net.x, net.y, net.width, net.height);
+        ctx.beginPath(); ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2); ctx.fill(); ctx.closePath(); ctx.shadowBlur = 0;
     }
 
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         if (gameState === 'playing') {
             let activePlayer = (myRole === 'p2') ? p2 : p1; 
+            if (keys.a) activePlayer.vx = -activePlayer.speed; else if (keys.d) activePlayer.vx = activePlayer.speed; else activePlayer.vx = 0;
+            p1.update(ball, myRole !== 'p2'); p2.update(ball, myRole === 'p2' || p2.isAI); 
+            let isHost = (myRole !== 'p2'); ball.update(p1, p2, isHost);
 
-            if (keys.a) activePlayer.vx = -activePlayer.speed;
-            else if (keys.d) activePlayer.vx = activePlayer.speed;
-            else activePlayer.vx = 0;
-
-            p1.update(ball, myRole !== 'p2'); 
-            p2.update(ball, myRole === 'p2' || p2.isAI); 
-
-            let isHost = (myRole !== 'p2');
-            ball.update(p1, p2, isHost);
-
-            if (myRole) {
-                socket.emit('playerMoved', { 
-                    roomId: roomId, role: myRole, x: activePlayer.x, y: activePlayer.y, 
-                    tilt: activePlayer.tilt, squash: activePlayer.squash, stretch: activePlayer.stretch 
-                });
-            }
+            if (myRole) { socket.emit('playerMoved', { roomId: roomId, role: myRole, x: activePlayer.x, y: activePlayer.y, tilt: activePlayer.tilt, squash: activePlayer.squash, stretch: activePlayer.stretch }); }
             if (myRole === 'p1') socket.emit('ballSync', { roomId: roomId, x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy });
 
-            for(let i=particles.length-1; i>=0; i--) {
-                particles[i].update(); if(particles[i].life <= 0) particles.splice(i, 1);
-            }
+            for(let i=particles.length-1; i>=0; i--) { particles[i].update(); if(particles[i].life <= 0) particles.splice(i, 1); }
         }
-
-        if (gameState !== 'menu') {
-            particles.forEach(p => p.draw());
-            drawNet(); p1.draw(); p2.draw(); ball.draw(); drawScore();
-        }
-
+        if (gameState !== 'menu') { particles.forEach(p => p.draw()); drawNet(); p1.draw(); p2.draw(); ball.draw(); drawScore(); }
         requestAnimationFrame(gameLoop);
     }
-
     gameLoop();
 </script>
 </body>
