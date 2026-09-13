@@ -12,20 +12,18 @@
             margin: 0; padding: 0; background-color: #e0f2fe; color: #fff;
             font-family: 'Courier New', Courier, monospace; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
-            /* Використовуємо змінні Telegram для точного визначення висоти без обрізки */
             height: var(--tg-viewport-stable-height, 100vh); 
             width: 100vw; touch-action: none; user-select: none; -webkit-user-select: none;
         }
         
+        /* Знято обмеження max-width/max-height для розтягування на весь екран */
         #gameContainer {
             position: relative; width: 100vw; height: 100%;
-            max-width: calc(var(--tg-viewport-stable-height, 100vh) * (16 / 9)); 
-            max-height: calc(100vw * (9 / 16));
             background: linear-gradient(to bottom, #e0f2fe 0%, #7dd3fc 40%, #0ea5e9 70%, #0369a1 100%);
-            box-shadow: 0 0 20px #0284c7; overflow: hidden;
+            overflow: hidden;
         }
         
-        canvas { display: block; width: 100%; height: 100%; }
+        canvas { display: block; width: 100%; height: 100%; object-fit: fill; }
         
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -62,20 +60,32 @@
         }
         #btnInGameMenu { left: 15px; } #btnPause { right: 15px; }
         
+        /* Контейнер керування тепер перехоплює дотики по всьому екрану */
         .controls-container {
-            position: absolute; bottom: 15px; left: 0; width: 100%;
-            display: flex; padding: 0 5%; box-sizing: border-box; z-index: 5;
-            pointer-events: none; justify-content: space-between; 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 5; pointer-events: none;
+        }
+        .controls-container:not(.hidden) { pointer-events: auto; }
+
+        /* Групи кнопок мають плавний перехід для відмальовки під пальцем */
+        .left-right-group { 
+            position: absolute; bottom: 15px; left: 5%; 
+            display: flex; gap: 15px; pointer-events: none; 
+            transition: left 0.1s ease-out, top 0.1s ease-out;
+        }
+        #btnJumpP1 {
+            position: absolute; bottom: 15px; right: 5%; pointer-events: none;
+            transition: left 0.1s ease-out, top 0.1s ease-out;
         }
 
+        /* Кнопки збільшено на 20% */
         .touch-btn {
-            pointer-events: auto; width: 18vh; height: 18vh;
-            min-width: 70px; min-height: 70px; max-width: 120px; max-height: 120px;
+            width: 22vh; height: 22vh;
+            min-width: 85px; min-height: 85px; max-width: 145px; max-height: 145px;
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            font-size: 4vh; user-select: none; background: rgba(255, 255, 255, 0.15);
+            font-size: 4.5vh; user-select: none; background: rgba(255, 255, 255, 0.15);
             border: 2px solid rgba(255, 255, 255, 0.5); color: rgba(255, 255, 255, 0.9);
         }
-        .left-right-group { display: flex; gap: 15px; }
 
         #rotatePrompt {
             display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -92,7 +102,6 @@
             border-radius: 8px; font-family: inherit; color: #020617; outline: none;
         }
 
-        /* Адаптація для вузьких екранів (ландшафтний режим на телефонах) */
         @media (max-height: 450px) {
             h1 { font-size: 2.2rem; margin-bottom: 10px; }
             .menu-buttons { gap: 8px; }
@@ -180,9 +189,8 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Глобальні змінні для ефектів
     let shakeFrames = 0;
-    let lastTime = 0; // Для Delta Time
+    let lastTime = 0; 
 
     let audioCtx = null; let bgmInterval = null; let bgmStep = 0;
     function initAudio() {
@@ -243,17 +251,12 @@
 
     socket.on('updateOpponent', (data) => {
         let opp = data.role === 'p1' ? p1 : p2;
-        // Інтерполяція (Lerp): зберігаємо цільові координати замість миттєвого стрибка
-        opp.targetX = data.x; 
-        opp.targetY = data.y; 
+        opp.targetX = data.x; opp.targetY = data.y; 
         opp.tilt = data.tilt; opp.squash = data.squash; opp.stretch = data.stretch;
     });
 
     socket.on('updateBall', (data) => {
-        if (myRole === 'p2') { 
-            ball.targetX = data.x; ball.targetY = data.y; 
-            ball.vx = data.vx; ball.vy = data.vy; 
-        }
+        if (myRole === 'p2') { ball.targetX = data.x; ball.targetY = data.y; ball.vx = data.vx; ball.vy = data.vy; }
     });
 
     socket.on('syncState', (data) => {
@@ -297,29 +300,39 @@
             this.baseRadius = 45; this.radius = this.baseRadius;
             this.vx = 0; this.vy = 0; this.jumpPower = -12; this.color = color; this.isAI = isAI; this.isGrounded = true;
             this.speed = 5.5; this.squash = 1; this.stretch = 1; this.tilt = 0; this.hitTimer = 0;
+            this.jumpCooldown = 0; // Запобіжник для спаму стрибків
         }
 
-        updateAI(ball) {
+        updateAI(ball, timeScale) {
             let aiSpeed = 4.5; let reactionDistance = 70; let jumpChance = 1;
             if (difficulty === 'easy') { aiSpeed = 3.5; reactionDistance = 50; jumpChance = 0.5; } 
             else if (difficulty === 'hard') { aiSpeed = 6.5; reactionDistance = 100; jumpChance = 1; }
+            
+            if (this.jumpCooldown > 0) this.jumpCooldown -= timeScale;
+
             if (ball.x > 400) { 
                 if (this.x < ball.x - 5) this.vx = aiSpeed; else if (this.x > ball.x + 5) this.vx = -aiSpeed; else this.vx = 0;
-                if (ball.y > 100 && ball.y < 320 && this.isGrounded && Math.abs(this.x - ball.x) < reactionDistance) {
-                    if (Math.random() <= jumpChance) { this.vy = this.jumpPower; this.isGrounded = false; spawnDust(this.x, this.y + this.radius); playSound('jump'); }
+                
+                // Бот стрибає ТІЛЬКИ якщо м'яч падає вниз (vy > 0) і пройшов кулдаун
+                if (ball.vy > 0 && ball.y > 100 && ball.y < 340 && this.isGrounded && Math.abs(this.x - ball.x) < reactionDistance) {
+                    if (this.jumpCooldown <= 0 && Math.random() <= jumpChance) { 
+                        this.vy = this.jumpPower; this.isGrounded = false; 
+                        spawnDust(this.x, this.y + this.radius); playSound('jump'); 
+                        this.jumpCooldown = 45; 
+                    }
                 }
-            } else { if (this.x < 600) this.vx = aiSpeed; else if (this.x > 620) this.vx = -aiSpeed; else this.vx = 0; }
+            } else { 
+                // Розумний відхід бота до центру своєї зони після удару
+                if (this.x < 550) this.vx = aiSpeed; else if (this.x > 570) this.vx = -aiSpeed; else this.vx = 0; 
+            }
         }
 
         update(ball, isLocalControl, timeScale) {
-            if (this.isAI && isLocalControl) this.updateAI(ball);
+            if (this.isAI && isLocalControl) this.updateAI(ball, timeScale);
             
             if (isLocalControl || this.isAI) {
-                // Зависання в повітрі (Hang Time)
                 let currentGravity = GRAVITY;
-                if (!this.isGrounded && Math.abs(this.vy) < 2.5) {
-                    currentGravity *= 0.55; 
-                }
+                if (!this.isGrounded && Math.abs(this.vy) < 2.5) { currentGravity *= 0.55; }
 
                 this.vy += currentGravity * timeScale; 
                 this.x += this.vx * timeScale; 
@@ -338,7 +351,6 @@
                 if (this.x < net.x) { if (this.x - this.radius < 0) this.x = this.radius; if (this.x + this.radius > net.x) this.x = net.x - this.radius; } 
                 else { if (this.x - this.radius < net.x + net.width) this.x = net.x + net.width + this.radius; if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius; }
             } else {
-                // Lerp для мережевого гравця
                 this.x += (this.targetX - this.x) * 0.4 * timeScale;
                 this.y += (this.targetY - this.y) * 0.4 * timeScale;
             }
@@ -360,7 +372,6 @@
                 this.x += this.vx * timeScale; 
                 this.y += this.vy * timeScale; 
             } else {
-                // Lerp м'яча для клієнта
                 this.x += (this.targetX - this.x) * 0.5 * timeScale;
                 this.y += (this.targetY - this.y) * 0.5 * timeScale;
             }
@@ -400,16 +411,13 @@
         checkPlayerCollision(p) {
             let dx = this.x - p.x; let dy = this.y - p.y; let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < this.radius + p.radius) {
-                // Механіка Smash: якщо вдарити м'яч зверху під час зависання у стрибку
                 let isSmash = !p.isGrounded && Math.abs(p.vy) < 3.5 && this.y < p.y - 10;
                 let bounceForce = isSmash ? 16 : 11; 
-                
                 let angle = Math.atan2(dy, dx); 
                 this.vx = Math.cos(angle) * bounceForce; this.vy = Math.sin(angle) * bounceForce; 
                 
-                // Нормалізація відскоку вверх
                 if (this.vy > 0 && !isSmash) this.vy = -this.vy - 3;
-                else if (isSmash && this.vy > 0) this.vy = Math.max(this.vy, 5); // Смеш йде жорстко вниз
+                else if (isSmash && this.vy > 0) this.vy = Math.max(this.vy, 5); 
                 
                 this.speedMultiplier += 0.05; this.vx *= this.speedMultiplier; this.vy *= this.speedMultiplier;
                 
@@ -418,10 +426,8 @@
                 
                 let hitType = isSmash ? 'smash' : 'hit';
                 playSound(hitType); spawnDust(this.x, this.y + this.radius, isSmash ? 20 : 5);
-                
                 if (isSmash) { shakeFrames = 15; tg.HapticFeedback.impactOccurred('heavy'); } 
                 else { tg.HapticFeedback.impactOccurred('medium'); }
-                
                 if (myRole === 'p1') socket.emit('gameEvent', { roomId, type: hitType, pName: p === p1 ? 'p1' : 'p2' });
             }
         }
@@ -439,6 +445,8 @@
 
     let p1 = new Player(150, '#f97316'); let p2 = new Player(650, '#fef08a', true); let ball = new Ball();
     const keys = { a: false, d: false, w: false };
+
+    // Управління на клавіатурі для тестів
     window.addEventListener('keydown', (e) => {
         let k = e.key; let pRef = (myRole === 'p2') ? p2 : p1;
         if (k==='a' || k==='A' || k==='ф' || k==='Ф' || e.code === 'ArrowLeft') keys.a = true;
@@ -458,22 +466,102 @@
         if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') keys.w = false;
     });
 
-    const addTouch = (id, key) => {
-        const btn = document.getElementById(id);
-        const startAction = (e) => { 
-            e.preventDefault(); if(gameState !== 'playing') return;
-            keys[key] = true; let pRef = (myRole === 'p2') ? p2 : p1;
-            if(key==='w' && pRef.isGrounded) {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
-                if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
-            }
-        };
-        const endAction = (e) => { e.preventDefault(); keys[key] = false; };
-        btn.addEventListener('touchstart', startAction); btn.addEventListener('touchend', endAction);
-        btn.addEventListener('mousedown', startAction); btn.addEventListener('mouseup', endAction);
-    };
-    addTouch('btnLeftP1', 'a'); addTouch('btnRightP1', 'd'); addTouch('btnJumpP1', 'w');
+    // --- НОВА ЛОГІКА ДИНАМІЧНОГО ДЖОЙСТИКА ---
+    const controlsContainer = document.getElementById('controlsP1');
+    const dpadGroup = document.querySelector('.left-right-group');
+    const jumpBtnGroup = document.getElementById('btnJumpP1');
 
+    let leftTouchId = null;
+    let rightTouchId = null;
+    let leftStartX = 0;
+
+    const resetLeftControls = () => {
+        keys.a = false; keys.d = false;
+        document.getElementById('btnLeftP1').style.background = 'rgba(255,255,255,0.15)';
+        document.getElementById('btnRightP1').style.background = 'rgba(255,255,255,0.15)';
+        dpadGroup.style.left = '5%'; dpadGroup.style.top = 'auto'; dpadGroup.style.bottom = '15px';
+    };
+
+    const resetRightControls = () => {
+        keys.w = false;
+        jumpBtnGroup.style.right = '5%'; jumpBtnGroup.style.left = 'auto'; 
+        jumpBtnGroup.style.top = 'auto'; jumpBtnGroup.style.bottom = '15px';
+        jumpBtnGroup.style.background = 'rgba(255,255,255,0.15)';
+    };
+
+    controlsContainer.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if(gameState !== 'playing') return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            let touch = e.changedTouches[i];
+            
+            // Якщо торкнулися лівої половини екрану
+            if (touch.clientX < window.innerWidth / 2) { 
+                leftTouchId = touch.identifier;
+                leftStartX = touch.clientX;
+                
+                // Переміщуємо візуальні кнопки прямо під палець
+                let newLeft = touch.clientX - dpadGroup.offsetWidth / 2;
+                let newTop = touch.clientY - dpadGroup.offsetHeight / 2;
+                dpadGroup.style.bottom = 'auto';
+                dpadGroup.style.left = Math.max(10, newLeft) + 'px';
+                dpadGroup.style.top = newTop + 'px';
+            } 
+            // Якщо торкнулися правої половини екрану (стрибок)
+            else { 
+                rightTouchId = touch.identifier;
+                
+                let newLeft = touch.clientX - jumpBtnGroup.offsetWidth / 2;
+                let newTop = touch.clientY - jumpBtnGroup.offsetHeight / 2;
+                jumpBtnGroup.style.bottom = 'auto'; jumpBtnGroup.style.right = 'auto';
+                jumpBtnGroup.style.left = newLeft + 'px';
+                jumpBtnGroup.style.top = newTop + 'px';
+                jumpBtnGroup.style.background = 'rgba(255,255,255,0.4)';
+
+                keys.w = true;
+                let pRef = (myRole === 'p2') ? p2 : p1;
+                if (pRef.isGrounded) {
+                    pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
+                    if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
+                }
+            }
+        }
+    }, {passive: false});
+
+    controlsContainer.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            let touch = e.changedTouches[i];
+            if (touch.identifier === leftTouchId) {
+                let threshold = 15; // Чутливість свайпу
+                keys.a = false; keys.d = false;
+                document.getElementById('btnLeftP1').style.background = 'rgba(255,255,255,0.15)';
+                document.getElementById('btnRightP1').style.background = 'rgba(255,255,255,0.15)';
+
+                if (touch.clientX < leftStartX - threshold) {
+                    keys.a = true; document.getElementById('btnLeftP1').style.background = 'rgba(255,255,255,0.5)';
+                } else if (touch.clientX > leftStartX + threshold) {
+                    keys.d = true; document.getElementById('btnRightP1').style.background = 'rgba(255,255,255,0.5)';
+                }
+            }
+        }
+    }, {passive: false});
+
+    const handleEnd = (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            let touch = e.changedTouches[i];
+            if (touch.identifier === leftTouchId) {
+                leftTouchId = null; resetLeftControls();
+            } else if (touch.identifier === rightTouchId) {
+                rightTouchId = null; resetRightControls();
+            }
+        }
+    };
+    controlsContainer.addEventListener('touchend', handleEnd);
+    controlsContainer.addEventListener('touchcancel', handleEnd);
+
+    // Логіка меню
     function showDifficulty() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('diffMenuBtns').classList.remove('hidden'); }
     function hideDifficulty() { document.getElementById('mainMenuBtns').classList.remove('hidden'); document.getElementById('diffMenuBtns').classList.add('hidden'); }
     function showOnlineMenu() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('onlineMenuBtns').classList.remove('hidden'); }
@@ -545,12 +633,11 @@
     }
 
     function gameLoop(timestamp) {
-        // Delta Time логіка
         if (!lastTime) lastTime = timestamp;
         let dt = (timestamp - lastTime) / 1000;
         lastTime = timestamp;
-        if (dt > 0.1) dt = 0.1; // Запобігає лагам, якщо вкладка була неактивна
-        let timeScale = dt * 60; // 1.0 при 60 FPS
+        if (dt > 0.1) dt = 0.1; 
+        let timeScale = dt * 60; 
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
@@ -571,11 +658,7 @@
         
         if (gameState !== 'menu') { 
             ctx.save();
-            // Ефект трясіння екрану
-            if (shakeFrames > 0) {
-                ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
-                shakeFrames--;
-            }
+            if (shakeFrames > 0) { ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10); shakeFrames--; }
             particles.forEach(p => p.draw()); drawNet(); p1.draw(); p2.draw(); ball.draw(); drawScore(); 
             ctx.restore();
         }
