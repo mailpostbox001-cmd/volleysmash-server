@@ -2,8 +2,13 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <!-- Виправлений метатег: прибрано orientation=landscape, що викликав помилку у WebView -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VolleySmash - Telegram Mini App</title>
+    
+    <!-- Підключення офіційного API Telegram -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
     <style>
         body {
             margin: 0;
@@ -16,29 +21,28 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            height: 100dvh;
             width: 100vw;
             touch-action: none;
-        }[span_0](start_span)[span_0](end_span)
+            -webkit-user-select: none;
+            user-select: none;
+        }
         
         #gameContainer {
             position: relative;
             width: 100vw;
             height: 100vh;
-            height: 100dvh;
             max-width: calc(100vh * (16 / 9));
-            max-width: calc(100dvh * (16 / 9));
             max-height: calc(100vw * (9 / 16));
             background: linear-gradient(to bottom, #e0f2fe 0%, #7dd3fc 40%, #0ea5e9 70%, #0369a1 100%);
             box-shadow: 0 0 20px #0284c7; 
             overflow: hidden;
-        }[span_1](start_span)[span_1](end_span)
+        }
         
         canvas {
             display: block;
             width: 100%;
             height: 100%;
-        }[span_2](start_span)[span_2](end_span)
+        }
         
         .overlay {
             position: absolute;
@@ -49,7 +53,7 @@
             align-items: center;
             background: rgba(2, 6, 23, 0.85); 
             z-index: 10;
-        }[span_3](start_span)[span_3](end_span)
+        }
         
         h1 {
             color: #fef08a;
@@ -57,7 +61,7 @@
             font-size: 3.5rem;
             margin-bottom: 20px;
             text-align: center;
-        }[span_4](start_span)[span_4](end_span)
+        }
         
         .menu-buttons {
             display: flex;
@@ -65,42 +69,40 @@
             gap: 15px;
             width: 80%;
             max-width: 400px;
-        }[span_5](start_span)[span_5](end_span)
+        }
 
+        /* Примусове скидання стандартних стилів браузера для кнопок */
         button {
-            background: rgba(26, 11, 46, 0.8);
-            border: 2px solid #0ea5e9;
-            color: #0ea5e9;
+            appearance: none;
+            -webkit-appearance: none;
+            background: rgba(26, 11, 46, 0.8) !important;
+            border: 2px solid #0ea5e9 !important;
+            color: #0ea5e9 !important;
             padding: 12px 20px;
             font-size: 1.2rem;
             font-family: inherit;
             cursor: pointer;
             text-transform: uppercase;
-            box-shadow: 0 0 10px #0ea5e9 inset;
+            box-shadow: 0 0 10px #0ea5e9 inset !important;
             transition: 0.2s;
-        }[span_6](start_span)[span_6](end_span)
-        button:active { background: #0ea5e9; color: #fff; }[span_7](start_span)[span_7](end_span)
-        .btn-white { border-color: #e0f2fe; color: #e0f2fe; box-shadow: 0 0 10px #e0f2fe inset; }[span_8](start_span)[span_8](end_span)
-        .btn-white:active { background: #e0f2fe; color: #020617; }[span_9](start_span)[span_9](end_span)
+            border-radius: 8px;
+        }
+        button:active { background: #0ea5e9 !important; color: #fff !important; }
+        .btn-white { border-color: #e0f2fe !important; color: #e0f2fe !important; box-shadow: 0 0 10px #e0f2fe inset !important; }
+        .btn-white:active { background: #e0f2fe !important; color: #020617 !important; }
         
-        .hidden { display: none !important; }[span_10](start_span)[span_10](end_span)
+        .hidden { display: none !important; }
 
-        #btnInGameMenu {
+        #btnInGameMenu, #btnPause {
             position: absolute;
-            top: 20px; left: 20px;
+            top: 20px;
             padding: 8px 16px; font-size: 1rem; z-index: 8; 
-            border-color: #0284c7; color: #0284c7;
-            background: rgba(255, 255, 255, 0.5);
-            box-shadow: none;
-        }[span_11](start_span)[span_11](end_span)
-        #btnPause {
-            position: absolute;
-            top: 20px; right: 20px;
-            padding: 8px 16px; font-size: 1rem; z-index: 8; 
-            border-color: #0284c7; color: #0284c7;
-            background: rgba(255, 255, 255, 0.5);
-            box-shadow: none;
-        }[span_12](start_span)[span_12](end_span)
+            border-color: #0284c7 !important; color: #0284c7 !important;
+            background: rgba(255, 255, 255, 0.5) !important;
+            box-shadow: none !important;
+        }
+        #btnInGameMenu { left: 20px; }
+        #btnPause { right: 20px; }
         
         .controls-container {
             position: absolute;
@@ -108,7 +110,7 @@
             display: flex; padding: 0 5%;
             box-sizing: border-box; z-index: 5;
             pointer-events: none; justify-content: space-between; 
-        }[span_13](start_span)[span_13](end_span)
+        }
 
         .touch-btn {
             pointer-events: auto;
@@ -121,20 +123,20 @@
             background: rgba(255, 255, 255, 0.15);
             border: 2px solid rgba(255, 255, 255, 0.5); 
             color: rgba(255, 255, 255, 0.9);
-        }[span_14](start_span)[span_14](end_span)
-        .left-right-group { display: flex; gap: 15px; }[span_15](start_span)[span_15](end_span)
+        }
+        .left-right-group { display: flex; gap: 15px; }
 
         #rotatePrompt {
             display: none; position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background: #e0f2fe; color: #0284c7;
             z-index: 100; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
-        }[span_16](start_span)[span_16](end_span)
+        }
         @media (orientation: portrait) {
-            #rotatePrompt { display: flex; }[span_17](start_span)[span_17](end_span)
-            #gameContainer { display: none; }[span_18](start_span)[span_18](end_span)
-        }[span_19](start_span)[span_19](end_span)
+            #rotatePrompt { display: flex; }
+            #gameContainer { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -187,18 +189,22 @@
     </div>
 </div>
 
-<!-- Підключення бібліотеки Socket.IO -->
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
+    // --- Ініціалізація Telegram Web App ---
+    let tg = window.Telegram.WebApp;
+    tg.expand(); // Розгортаємо гру на весь екран
+    tg.ready();  // Кажемо Telegram, що ми завантажились
+
+    // --- Налаштування Socket.IO ---
     const socket = io();
     let myRole = null; 
-    let roomId = 'main-room'; // Базова кімната для тестування
+    let roomId = 'main-room'; 
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Аудіо та Фонова музика
     let audioCtx = null;
     let bgmInterval = null;
     let bgmStep = 0;
@@ -270,10 +276,7 @@
         if (bgmInterval) clearInterval(bgmInterval);
     }
 
-    // Мережеві слухачі Socket.IO
-    socket.on('playerRole', (role) => {
-        myRole = role;
-    });
+    socket.on('playerRole', (role) => { myRole = role; });
 
     socket.on('gameReady', () => {
         document.getElementById('winnerText').innerText = "";
@@ -282,16 +285,13 @@
         document.getElementById('btnInGameMenu').classList.remove('hidden');
         document.getElementById('btnPause').classList.remove('hidden');
         
-        p1.isAI = false; 
-        p2.isAI = false; 
-        
+        p1.isAI = false; p2.isAI = false; 
         score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 };
         p1.x = p1.startX; p2.x = p2.startX;
         p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
         particles = [];
         ball.reset(1);
         gameState = 'playing';
-        
         playSound('whistle');
         startBGM(); 
     });
@@ -303,7 +303,7 @@
     });
 
     socket.on('updateBall', (data) => {
-        if (myRole === 'p2') { // Тільки гравець 2 отримує фізику від хоста (P1)
+        if (myRole === 'p2') { 
             ball.x = data.x; ball.y = data.y;
             ball.vx = data.vx; ball.vy = data.vy;
         }
@@ -311,10 +311,8 @@
 
     socket.on('syncState', (data) => {
         if (myRole === 'p2') {
-            score = data.score;
-            sets = data.sets;
-            p1.radius = data.p1Radius;
-            p2.radius = data.p2Radius;
+            score = data.score; sets = data.sets;
+            p1.radius = data.p1Radius; p2.radius = data.p2Radius;
             if (data.sound) playSound(data.sound);
             if (data.isGameOver) checkMatchWin(data.winner);
         }
@@ -337,7 +335,6 @@
         }
     });
 
-    // Система часток (Пил тільки для ніг)
     let particles = [];
     class Dust {
         constructor(x, y) {
@@ -347,15 +344,10 @@
             this.life = 1.0;
             this.size = Math.random() * 8 + 4;
         }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            this.life -= 0.05;
-        }
+        update() { this.x += this.vx; this.y += this.vy; this.life -= 0.05; }
         draw() {
             ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`; 
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
         }
     }
 
@@ -363,33 +355,19 @@
         for(let i=0; i<count; i++) particles.push(new Dust(x, y));
     }
 
-    const GRAVITY = 0.6;
-    const PTS_TO_WIN_SET = 7;
-    const SETS_TO_WIN_MATCH = 3;
-
-    let gameState = 'menu'; 
-    let difficulty = 'normal';
-    
-    let score = { p1: 0, p2: 0 };
-    let sets = { p1: 0, p2: 0 };
-
+    const GRAVITY = 0.6; const PTS_TO_WIN_SET = 7; const SETS_TO_WIN_MATCH = 3;
+    let gameState = 'menu'; let difficulty = 'normal';
+    let score = { p1: 0, p2: 0 }; let sets = { p1: 0, p2: 0 };
     const net = { x: 395, y: 250, width: 10, height: 200 };
 
     class Player {
         constructor(x, color, isAI = false) {
             this.startX = x; this.x = x; this.y = 350;
             this.baseRadius = 45; this.radius = this.baseRadius;
-            this.vx = 0; this.vy = 0;
-            this.jumpPower = -12;
-            this.color = color;
-            this.isAI = isAI;
-            this.isGrounded = true;
-            this.speed = 5.5;
-            
-            this.squash = 1; 
-            this.stretch = 1;
-            this.tilt = 0;
-            this.hitTimer = 0;
+            this.vx = 0; this.vy = 0; this.jumpPower = -12;
+            this.color = color; this.isAI = isAI; this.isGrounded = true;
+            this.speed = 5.5; this.squash = 1; this.stretch = 1;
+            this.tilt = 0; this.hitTimer = 0;
         }
 
         updateAI(ball) {
@@ -405,8 +383,7 @@
                 if (ball.y > 100 && ball.y < 320 && this.isGrounded && Math.abs(this.x - ball.x) < reactionDistance) {
                     if (Math.random() <= jumpChance) {
                         this.vy = this.jumpPower; this.isGrounded = false;
-                        spawnDust(this.x, this.y + this.radius);
-                        playSound('jump');
+                        spawnDust(this.x, this.y + this.radius); playSound('jump');
                     }
                 }
             } else {
@@ -418,37 +395,21 @@
 
         update(ball, isLocalControl = true) {
             if (this.isAI && isLocalControl) this.updateAI(ball);
-
-            // Фізика застосовується тільки якщо це гравець, яким ми керуємо локально
             if (isLocalControl || this.isAI) {
-                this.vy += GRAVITY;
-                this.x += this.vx;
-                this.y += this.vy;
+                this.vy += GRAVITY; this.x += this.vx; this.y += this.vy;
                 this.tilt = this.vx * 0.03;
 
-                if (!this.isGrounded) {
-                    this.stretch = 1.1; this.squash = 0.9;
-                } else {
-                    this.stretch += (1 - this.stretch) * 0.2;
-                    this.squash += (1 - this.squash) * 0.2;
-                }
+                if (!this.isGrounded) { this.stretch = 1.1; this.squash = 0.9; } 
+                else { this.stretch += (1 - this.stretch) * 0.2; this.squash += (1 - this.squash) * 0.2; }
 
-                if (this.hitTimer > 0) {
-                    this.stretch = 0.8; this.squash = 1.2; 
-                    this.hitTimer--;
-                }
+                if (this.hitTimer > 0) { this.stretch = 0.8; this.squash = 1.2; this.hitTimer--; }
 
                 if (this.y + this.radius >= canvas.height) {
                     if (!this.isGrounded && this.vy > 5) {
-                        spawnDust(this.x, canvas.height); 
-                        this.stretch = 0.8; this.squash = 1.2; 
+                        spawnDust(this.x, canvas.height); this.stretch = 0.8; this.squash = 1.2; 
                     }
-                    this.y = canvas.height - this.radius;
-                    this.vy = 0;
-                    this.isGrounded = true;
-                } else {
-                    this.isGrounded = false;
-                }
+                    this.y = canvas.height - this.radius; this.vy = 0; this.isGrounded = true;
+                } else { this.isGrounded = false; }
 
                 if (this.x < net.x) {
                     if (this.x - this.radius < 0) this.x = this.radius;
@@ -461,61 +422,30 @@
         }
 
         draw() {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.rotate(this.tilt);
-            
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.tilt);
             if (this.startX < 400) ctx.scale(-1, 1);
-            
             ctx.scale(this.squash, this.stretch);
-            
             ctx.font = `${this.radius * 1.6}px Arial`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            
             ctx.shadowBlur = 20; ctx.shadowColor = this.color;
-            ctx.fillText('🐧', 0, 5); 
-            ctx.restore();
+            ctx.fillText('🐧', 0, 5); ctx.restore();
         }
     }
 
     class Ball {
-        constructor() {
-            this.radius = 25; this.rotation = 0;
-            this.lastHitter = null; this.crossedNet = false;
-            this.trail = []; 
-            this.reset(1);
-        }
-
-        reset(server) {
-            this.x = server === 1 ? 200 : 600; this.y = 80;
-            this.vx = 0; this.vy = 0;
-            this.speedMultiplier = 1;
-            this.lastHitter = null; this.crossedNet = false;
-            this.trail = [];
-        }
+        constructor() { this.radius = 25; this.rotation = 0; this.lastHitter = null; this.crossedNet = false; this.trail = []; this.reset(1); }
+        reset(server) { this.x = server === 1 ? 200 : 600; this.y = 80; this.vx = 0; this.vy = 0; this.speedMultiplier = 1; this.lastHitter = null; this.crossedNet = false; this.trail = []; }
 
         update(p1, p2, isHost = true) {
-            // Хост вираховує фізику
-            if (isHost) {
-                this.vy += GRAVITY * 0.46;
-                this.x += this.vx; this.y += this.vy;
-            }
+            if (isHost) { this.vy += GRAVITY * 0.46; this.x += this.vx; this.y += this.vy; }
 
-            // Шлейф малюється у всіх незалежно
             let speed = Math.abs(this.vx) + Math.abs(this.vy);
-            if (speed > 12) {
-                this.trail.push({x: this.x, y: this.y});
-                if (this.trail.length > 8) this.trail.shift();
-            } else if (this.trail.length > 0) {
-                this.trail.shift();
-            }
+            if (speed > 12) { this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 8) this.trail.shift(); } 
+            else if (this.trail.length > 0) { this.trail.shift(); }
 
             if (isHost) {
-                if (this.lastHitter === p1 && !this.crossedNet && this.x > net.x + net.width) {
-                    this.crossedNet = true; p1.radius *= 1.1; 
-                } else if (this.lastHitter === p2 && !this.crossedNet && this.x < net.x) {
-                    this.crossedNet = true; p2.radius *= 1.1; 
-                }
+                if (this.lastHitter === p1 && !this.crossedNet && this.x > net.x + net.width) { this.crossedNet = true; p1.radius *= 1.1; } 
+                else if (this.lastHitter === p2 && !this.crossedNet && this.x < net.x) { this.crossedNet = true; p2.radius *= 1.1; }
 
                 if (this.x - this.radius <= 0) { this.x = this.radius; this.vx *= -0.95; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
                 if (this.x + this.radius >= canvas.width) { this.x = canvas.width - this.radius; this.vx *= -0.95; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
@@ -523,50 +453,31 @@
 
                 if (this.x + this.radius > net.x && this.x - this.radius < net.x + net.width && this.y + this.radius > net.y) {
                     if (this.y < net.y + 10) { this.vy *= -0.95; this.y = net.y - this.radius; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); } 
-                    else {
-                        this.vx *= -1;
-                        if (this.x < net.x) this.x = net.x - this.radius;
-                        else this.x = net.x + net.width + this.radius;
-                        playSound('wall');
-                        if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'});
-                    }
+                    else { this.vx *= -1; this.x = this.x < net.x ? net.x - this.radius : net.x + net.width + this.radius; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
                 }
 
                 if (this.y + this.radius >= canvas.height) {
                     playSound('whistle');
-                    let sndToPlay = 'score';
-                    let isGameOver = false;
-                    let winner = '';
-                    
+                    let sndToPlay = 'score'; let isGameOver = false; let winner = '';
                     let nextServer = 1;
-                    if (this.x < net.x) { score.p2++; nextServer = 1; } 
-                    else { score.p1++; nextServer = 2; }
+                    if (this.x < net.x) { score.p2++; nextServer = 1; } else { score.p1++; nextServer = 2; }
 
                     if (score.p1 >= PTS_TO_WIN_SET || score.p2 >= PTS_TO_WIN_SET) {
                         if (score.p1 > score.p2) sets.p1++; else sets.p2++;
                         score.p1 = 0; score.p2 = 0;
-
                         if (sets.p1 >= SETS_TO_WIN_MATCH || sets.p2 >= SETS_TO_WIN_MATCH) {
-                            sndToPlay = 'match_win';
-                            isGameOver = true;
-                            winner = sets.p1 >= SETS_TO_WIN_MATCH ? 'p1' : 'p2';
+                            sndToPlay = 'match_win'; isGameOver = true; winner = sets.p1 >= SETS_TO_WIN_MATCH ? 'p1' : 'p2';
                         } else { sndToPlay = 'set_win'; }
                     }
 
-                    playSound(sndToPlay);
-                    this.reset(nextServer);
-                    p1.x = p1.startX; p1.y = 350; p1.radius = p1.baseRadius;
-                    p2.x = p2.startX; p2.y = 350; p2.radius = p2.baseRadius;
+                    playSound(sndToPlay); this.reset(nextServer);
+                    p1.x = p1.startX; p1.y = 350; p1.radius = p1.baseRadius; p2.x = p2.startX; p2.y = 350; p2.radius = p2.baseRadius;
 
-                    // Синхронізуємо рахунок і звук для Гравця 2
                     if (myRole === 'p1') {
-                        socket.emit('syncState', {
-                            roomId, score, sets, p1Radius: p1.radius, p2Radius: p2.radius, sound: sndToPlay, isGameOver, winner
-                        });
+                        socket.emit('syncState', { roomId, score, sets, p1Radius: p1.radius, p2Radius: p2.radius, sound: sndToPlay, isGameOver, winner });
                     }
                     if (isGameOver) { checkMatchWin(winner); return; }
                 }
-
                 this.checkPlayerCollision(p1); this.checkPlayerCollision(p2);
             }
         }
@@ -578,72 +489,46 @@
             if (distance < this.radius + p.radius) {
                 let angle = Math.atan2(dy, dx);
                 let bounceForce = 11; 
-                
-                this.vx = Math.cos(angle) * bounceForce;
-                this.vy = Math.sin(angle) * bounceForce;
+                this.vx = Math.cos(angle) * bounceForce; this.vy = Math.sin(angle) * bounceForce;
                 if (this.vy > 0) this.vy = -this.vy - 3;
-                
-                this.speedMultiplier += 0.05;
-                this.vx *= this.speedMultiplier; this.vy *= this.speedMultiplier;
+                this.speedMultiplier += 0.05; this.vx *= this.speedMultiplier; this.vy *= this.speedMultiplier;
                 
                 let overlap = (this.radius + p.radius) - distance;
                 this.x += Math.cos(angle) * overlap; this.y += Math.sin(angle) * overlap;
 
-                this.lastHitter = p; this.crossedNet = false;
-                p.hitTimer = 5; 
-                
-                playSound('hit');
-                spawnDust(this.x, this.y + this.radius, 5);
+                this.lastHitter = p; this.crossedNet = false; p.hitTimer = 5; 
+                playSound('hit'); spawnDust(this.x, this.y + this.radius, 5);
                 if (myRole === 'p1') socket.emit('gameEvent', { roomId, type: 'hit', pName: p === p1 ? 'p1' : 'p2' });
             }
         }
 
         draw() {
             for(let i=0; i<this.trail.length; i++) {
-                let t = this.trail[i];
-                let ratio = (i + 1) / this.trail.length;
-                ctx.beginPath();
-                ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(254, 240, 138, ${0.4 * ratio})`; 
-                ctx.fill();
+                let t = this.trail[i]; let ratio = (i + 1) / this.trail.length;
+                ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(254, 240, 138, ${0.4 * ratio})`; ctx.fill();
             }
-
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            this.rotation += this.vx * 0.05;
-            ctx.rotate(this.rotation);
-
-            ctx.beginPath();
-            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#f8fafc'; 
-            ctx.shadowBlur = 25; ctx.shadowColor = '#bae6fd'; 
+            ctx.save(); ctx.translate(this.x, this.y); this.rotation += this.vx * 0.05; ctx.rotate(this.rotation);
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#f8fafc'; ctx.shadowBlur = 25; ctx.shadowColor = '#bae6fd'; 
             ctx.fill(); ctx.closePath();
-            
-            ctx.shadowBlur = 0;
-            ctx.font = `${this.radius * 1.3}px Arial`;
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('❄️', 0, 1);
-            ctx.restore();
+            ctx.shadowBlur = 0; ctx.font = `${this.radius * 1.3}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('❄️', 0, 1); ctx.restore();
         }
     }
 
-    let p1 = new Player(150, '#f97316'); 
-    let p2 = new Player(650, '#fef08a', true); 
-    let ball = new Ball();
+    let p1 = new Player(150, '#f97316'); let p2 = new Player(650, '#fef08a', true); let ball = new Ball();
 
     const keys = { a: false, d: false, w: false };
     window.addEventListener('keydown', (e) => {
-        let k = e.key;
-        let pRef = (myRole === 'p2') ? p2 : p1;
-        
+        let k = e.key; let pRef = (myRole === 'p2') ? p2 : p1;
         if (k==='a' || k==='A' || k==='ф' || k==='Ф' || e.code === 'ArrowLeft') keys.a = true;
         if (k==='d' || k==='D' || k==='в' || k==='В' || e.code === 'ArrowRight') keys.d = true;
         if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') { 
             keys.w = true; 
             if (pRef.isGrounded && gameState === 'playing') {
                 pRef.vy = pRef.jumpPower; pRef.isGrounded = false;
-                spawnDust(pRef.x, pRef.y + pRef.radius);
-                playSound('jump');
+                spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
         }
@@ -658,58 +543,34 @@
     const addTouch = (id, key) => {
         const btn = document.getElementById(id);
         const startAction = (e) => { 
-            e.preventDefault(); 
-            if(gameState !== 'playing') return;
-            keys[key] = true; 
-            let pRef = (myRole === 'p2') ? p2 : p1;
+            e.preventDefault(); if(gameState !== 'playing') return;
+            keys[key] = true; let pRef = (myRole === 'p2') ? p2 : p1;
             if(key==='w' && pRef.isGrounded) {
                 pRef.vy = pRef.jumpPower; pRef.isGrounded = false;
-                spawnDust(pRef.x, pRef.y + pRef.radius);
-                playSound('jump');
+                spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
         };
         const endAction = (e) => { e.preventDefault(); keys[key] = false; };
-        btn.addEventListener('touchstart', startAction);
-        btn.addEventListener('touchend', endAction);
-        btn.addEventListener('mousedown', startAction);
-        btn.addEventListener('mouseup', endAction);
+        btn.addEventListener('touchstart', startAction); btn.addEventListener('touchend', endAction);
+        btn.addEventListener('mousedown', startAction); btn.addEventListener('mouseup', endAction);
     };
 
-    addTouch('btnLeftP1', 'a');
-    addTouch('btnRightP1', 'd');
-    addTouch('btnJumpP1', 'w');
+    addTouch('btnLeftP1', 'a'); addTouch('btnRightP1', 'd'); addTouch('btnJumpP1', 'w');
 
-    function showDifficulty() {
-        document.getElementById('mainMenuBtns').classList.add('hidden');
-        document.getElementById('diffMenuBtns').classList.remove('hidden');
-    }
-    
-    function hideDifficulty() {
-        document.getElementById('mainMenuBtns').classList.remove('hidden');
-        document.getElementById('diffMenuBtns').classList.add('hidden');
-    }
+    function showDifficulty() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('diffMenuBtns').classList.remove('hidden'); }
+    function hideDifficulty() { document.getElementById('mainMenuBtns').classList.remove('hidden'); document.getElementById('diffMenuBtns').classList.add('hidden'); }
 
-    // Режим онлайн (замість alert)
     function startOnline() {
-        initAudio();
-        myRole = null; // Обнуляємо локальну роль перед входом
-        socket.emit('joinRoom', roomId);
-        
+        initAudio(); myRole = null; socket.emit('joinRoom', roomId);
         document.getElementById('menuScreen').classList.add('hidden');
         document.getElementById('winnerText').innerText = "ОЧІКУВАННЯ СУПЕРНИКА...";
         document.getElementById('finalScore').innerText = "";
         document.getElementById('gameOverScreen').classList.remove('hidden');
     }
 
-    // PvE режим
     function startGame(mode, diff = 'normal') {
-        initAudio(); 
-        difficulty = diff;
-        myRole = null; // Позначаємо, що ми локально граємо
-        
-        p1.isAI = false; p2.isAI = true; 
-        
+        initAudio(); difficulty = diff; myRole = null; p1.isAI = false; p2.isAI = true; 
         document.getElementById('controlsP1').classList.remove('hidden');
         document.getElementById('menuScreen').classList.add('hidden');
         document.getElementById('gameOverScreen').classList.add('hidden');
@@ -717,14 +578,8 @@
         document.getElementById('btnPause').classList.remove('hidden');
         
         score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 };
-        p1.x = p1.startX; p2.x = p2.startX;
-        p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
-        particles = [];
-        ball.reset(1);
-        gameState = 'playing';
-        
-        playSound('whistle');
-        startBGM(); 
+        p1.x = p1.startX; p2.x = p2.startX; p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
+        particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); startBGM(); 
     }
 
     function togglePause() {
@@ -746,17 +601,8 @@
     }
 
     function checkMatchWin(networkWinner = null) {
-        playSound('whistle');
-        setTimeout(() => playSound('match_win'), 500);
-        stopBGM();
-        
-        let text = "";
-        if (myRole) { // Онлайн режим
-            text = (networkWinner === myRole) ? "ВИ ПЕРЕМОГЛИ!" : "СУПЕРНИК ПЕРЕМІГ!";
-        } else { // PvE
-            text = sets.p1 >= SETS_TO_WIN_MATCH ? "ВИ ПЕРЕМОГЛИ!" : "ШІ ПЕРЕМІГ!";
-        }
-
+        playSound('whistle'); setTimeout(() => playSound('match_win'), 500); stopBGM();
+        let text = myRole ? (networkWinner === myRole ? "ВИ ПЕРЕМОГЛИ!" : "СУПЕРНИК ПЕРЕМІГ!") : (sets.p1 >= SETS_TO_WIN_MATCH ? "ВИ ПЕРЕМОГЛИ!" : "ШІ ПЕРЕМІГ!");
         gameState = 'gameover';
         document.getElementById('winnerText').innerText = text;
         document.getElementById('finalScore').innerText = `Сети: ${sets.p1} - ${sets.p2}`;
@@ -767,8 +613,7 @@
     }
 
     function returnToMenu() {
-        gameState = 'menu';
-        stopBGM();
+        gameState = 'menu'; stopBGM();
         document.getElementById('gameOverScreen').classList.add('hidden');
         document.getElementById('pauseScreen').classList.add('hidden');
         document.getElementById('btnInGameMenu').classList.add('hidden');
@@ -779,23 +624,15 @@
     }
 
     function drawScore() {
-        ctx.font = 'bold 50px Courier New';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.textAlign = 'center';
+        ctx.font = 'bold 50px Courier New'; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.textAlign = 'center';
         ctx.fillText(`${score.p1} - ${score.p2}`, canvas.width / 2, 70);
-        
-        ctx.font = '20px Courier New';
-        ctx.fillStyle = '#fef08a';
-        ctx.fillText(`СЕТИ: ${sets.p1} - ${sets.p2}`, canvas.width / 2, 30);
+        ctx.font = '20px Courier New'; ctx.fillStyle = '#fef08a'; ctx.fillText(`СЕТИ: ${sets.p1} - ${sets.p2}`, canvas.width / 2, 30);
     }
 
     function drawNet() {
-        ctx.fillStyle = '#f8fafc';
-        ctx.shadowBlur = 15; ctx.shadowColor = '#0ea5e9';
+        ctx.fillStyle = '#f8fafc'; ctx.shadowBlur = 15; ctx.shadowColor = '#0ea5e9';
         ctx.fillRect(net.x, net.y, net.width, net.height);
-        ctx.beginPath();
-        ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2);
-        ctx.fill(); ctx.closePath();
+        ctx.beginPath(); ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2); ctx.fill(); ctx.closePath();
         ctx.shadowBlur = 0;
     }
 
@@ -803,43 +640,34 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (gameState === 'playing') {
-            let activePlayer = (myRole === 'p2') ? p2 : p1; // Визначаємо, ким керує локальний пристрій
+            let activePlayer = (myRole === 'p2') ? p2 : p1; 
 
             if (keys.a) activePlayer.vx = -activePlayer.speed;
             else if (keys.d) activePlayer.vx = activePlayer.speed;
             else activePlayer.vx = 0;
 
-            // Оновлюємо фізику гравців (PvE або локальний гравець для PvP)
             p1.update(ball, myRole !== 'p2'); 
             p2.update(ball, myRole === 'p2' || p2.isAI); 
 
-            // Оновлюємо м'яч (Тільки хост PvP, або PvE)
             let isHost = (myRole !== 'p2');
             ball.update(p1, p2, isHost);
 
-            // Відправка власних рухів на сервер (для Онлайн гри)
             if (myRole) {
                 socket.emit('playerMoved', { 
-                    roomId: roomId, role: myRole, 
-                    x: activePlayer.x, y: activePlayer.y, 
+                    roomId: roomId, role: myRole, x: activePlayer.x, y: activePlayer.y, 
                     tilt: activePlayer.tilt, squash: activePlayer.squash, stretch: activePlayer.stretch 
                 });
             }
-            // Відправка м'яча на сервер від Гравця 1
-            if (myRole === 'p1') {
-                socket.emit('ballSync', { roomId: roomId, x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy });
-            }
+            if (myRole === 'p1') socket.emit('ballSync', { roomId: roomId, x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy });
 
             for(let i=particles.length-1; i>=0; i--) {
-                particles[i].update();
-                if(particles[i].life <= 0) particles.splice(i, 1);
+                particles[i].update(); if(particles[i].life <= 0) particles.splice(i, 1);
             }
         }
 
         if (gameState !== 'menu') {
             particles.forEach(p => p.draw());
-            drawNet(); p1.draw(); p2.draw();
-            ball.draw(); drawScore();
+            drawNet(); p1.draw(); p2.draw(); ball.draw(); drawScore();
         }
 
         requestAnimationFrame(gameLoop);
