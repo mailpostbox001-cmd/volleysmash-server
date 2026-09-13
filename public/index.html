@@ -9,17 +9,18 @@
     
     <style>
         body {
-            margin: 0; padding: 0; background-color: #e0f2fe; color: #fff;
+            margin: 0; padding: 0; background-color: #2b0f4c; color: #fff;
             font-family: 'Courier New', Courier, monospace; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
             height: var(--tg-viewport-stable-height, 100vh); 
             width: 100vw; touch-action: none; user-select: none; -webkit-user-select: none;
         }
         
+        /* Яскравий аркадний фон */
         #gameContainer {
             position: relative; width: 100vw; height: 100%;
-            background: linear-gradient(to bottom, #e0f2fe 0%, #7dd3fc 40%, #0ea5e9 70%, #0369a1 100%);
-            overflow: hidden;
+            background: linear-gradient(to bottom, #2b0f4c 0%, #7a1b6c 40%, #d81b60 70%, #ff6f00 100%);
+            box-shadow: 0 0 40px #ff007f inset; overflow: hidden;
         }
         
         canvas { display: block; width: 100%; height: 100%; object-fit: fill; }
@@ -27,12 +28,12 @@
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(2, 6, 23, 0.85); z-index: 10;
+            background: rgba(20, 5, 40, 0.85); z-index: 10;
         }
         
         h1 {
-            color: #fef08a; text-shadow: 0 0 10px #f97316, 0 0 20px #e55c7a;
-            font-size: 3.5rem; margin-bottom: 20px; text-align: center;
+            color: #00e5ff; text-shadow: 4px 4px 0 #ff007f, 0 0 20px #00e5ff;
+            font-size: 3.8rem; margin-bottom: 25px; text-align: center; font-weight: 900;
         }
         
         .menu-buttons {
@@ -41,66 +42,76 @@
 
         button {
             appearance: none; -webkit-appearance: none;
-            background: rgba(26, 11, 46, 0.8) !important; border: 2px solid #0ea5e9 !important;
-            color: #0ea5e9 !important; padding: 12px 20px; font-size: 1.2rem;
+            background: #ff007f !important; border: 3px solid #00e5ff !important;
+            color: #fff !important; padding: 14px 20px; font-size: 1.2rem; font-weight: bold;
             font-family: inherit; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 0 10px #0ea5e9 inset !important; transition: 0.2s; border-radius: 8px;
+            box-shadow: 0 6px 0 #00e5ff, 0 0 15px rgba(255,0,127,0.5) !important; 
+            transition: 0.1s; border-radius: 12px; text-shadow: 1px 1px 0 #000;
         }
-        button:active { background: #0ea5e9 !important; color: #fff !important; }
-        .btn-white { border-color: #e0f2fe !important; color: #e0f2fe !important; box-shadow: 0 0 10px #e0f2fe inset !important; }
-        .btn-white:active { background: #e0f2fe !important; color: #020617 !important; }
+        button:active { 
+            transform: translateY(6px); box-shadow: 0 0 0 #00e5ff, 0 0 10px rgba(255,0,127,0.5) !important; 
+            background: #d81b60 !important; 
+        }
+        
+        .btn-white { 
+            background: #00e5ff !important; border-color: #ffea00 !important; color: #000 !important; 
+            box-shadow: 0 6px 0 #ffea00 !important; text-shadow: none;
+        }
+        .btn-white:active { background: #00b8cc !important; box-shadow: 0 0 0 #ffea00 !important; }
         
         .hidden { display: none !important; }
 
         #btnInGameMenu, #btnPause {
-            position: absolute; top: 15px; padding: 6px 12px; font-size: 0.9rem; z-index: 8; 
-            border-color: #0284c7 !important; color: #0284c7 !important;
-            background: rgba(255, 255, 255, 0.5) !important; box-shadow: none !important;
+            position: absolute; top: 15px; padding: 8px 16px; font-size: 1rem; z-index: 8; 
+            border-color: #00e5ff !important; color: #fff !important;
+            background: rgba(255, 0, 127, 0.8) !important; box-shadow: 0 4px 0 #00e5ff !important;
         }
+        #btnInGameMenu:active, #btnPause:active { transform: translateY(4px); box-shadow: 0 0 0 #00e5ff !important; }
         #btnInGameMenu { left: 15px; } #btnPause { right: 15px; }
         
-        /* Шар для перехоплення дотиків */
+        /* Збільшені та яскраві статичні кнопки управління */
         .controls-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5; pointer-events: none;
+            position: absolute; bottom: 15px; left: 0; width: 100%;
+            display: flex; padding: 0 4%; box-sizing: border-box; z-index: 5;
+            justify-content: space-between; pointer-events: none;
         }
-        .controls-container:not(.hidden) { pointer-events: auto; }
+        
+        .left-right-group { display: flex; gap: 20px; pointer-events: auto; }
 
-        /* Динамічний візуальний джойстик */
-        #joystick-base {
-            position: absolute; width: 110px; height: 110px;
-            border-radius: 50%; background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            transform: translate(-50%, -50%); pointer-events: none; z-index: 10;
+        .touch-btn {
+            pointer-events: auto; width: 22vh; height: 22vh; /* Збільшено на 20% */
+            min-width: 95px; min-height: 95px; max-width: 150px; max-height: 150px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 5vh; font-weight: bold; user-select: none; 
+            background: rgba(0, 229, 255, 0.2); border: 4px solid #00e5ff; 
+            color: #fff; text-shadow: 2px 2px 0 #ff007f;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4) inset, 0 5px 15px rgba(0,0,0,0.3);
+            transition: background 0.1s;
         }
-        #joystick-knob {
-            position: absolute; width: 55px; height: 55px;
-            border-radius: 50%; background: rgba(255, 255, 255, 0.85);
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-        }
+        
+        #btnJumpP1 { pointer-events: auto; }
 
         #rotatePrompt {
             display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #e0f2fe; color: #0284c7; z-index: 100; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center;
+            background: #2b0f4c; color: #00e5ff; z-index: 100; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; text-shadow: 2px 2px 0 #ff007f;
         }
         @media (orientation: portrait) {
             #rotatePrompt { display: flex; } #gameContainer { display: none; }
         }
 
         #roomCodeInput {
-            padding: 10px; font-size: 1.2rem; text-align: center; text-transform: uppercase;
-            font-weight: bold; background: rgba(255,255,255,0.9); border: 2px solid #0ea5e9;
-            border-radius: 8px; font-family: inherit; color: #020617; outline: none;
+            padding: 12px; font-size: 1.5rem; text-align: center; text-transform: uppercase;
+            font-weight: 900; background: #fff; border: 4px solid #ff007f; color: #2b0f4c;
+            border-radius: 12px; font-family: inherit; outline: none; box-shadow: 0 0 15px #ff007f;
         }
 
         @media (max-height: 450px) {
-            h1 { font-size: 2.2rem; margin-bottom: 10px; }
-            .menu-buttons { gap: 8px; }
-            button { padding: 8px 16px; font-size: 1rem; }
-            #winnerText { font-size: 1.5rem !important; margin: 5px 0; }
-            #finalScore { margin-bottom: 10px !important; }
+            h1 { font-size: 2.5rem; margin-bottom: 10px; }
+            .menu-buttons { gap: 10px; }
+            button { padding: 10px 16px; font-size: 1rem; box-shadow: 0 4px 0 #00e5ff !important; }
+            button:active { transform: translateY(4px); }
+            .btn-white { box-shadow: 0 4px 0 #ffea00 !important; }
         }
     </style>
 </head>
@@ -115,7 +126,7 @@
     <canvas id="gameCanvas" width="800" height="450"></canvas>
     
     <button id="btnInGameMenu" class="hidden" onclick="returnToMenu()">Меню</button>
-    <button id="btnPause" class="hidden" onclick="togglePause()">⏸ Пауза</button>
+    <button id="btnPause" class="hidden" onclick="togglePause()">⏸</button>
 
     <div id="menuScreen" class="overlay">
         <h1>VOLLEY SMASH</h1>
@@ -126,9 +137,9 @@
         </div>
         
         <div class="menu-buttons hidden" id="diffMenuBtns">
-            <button onclick="startGame('ai', 'easy')">Складність: Легко</button>
-            <button onclick="startGame('ai', 'normal')">Складність: Нормально</button>
-            <button onclick="startGame('ai', 'hard')">Складність: Важко</button>
+            <button onclick="startGame('ai', 'easy')">Легко</button>
+            <button onclick="startGame('ai', 'normal')">Нормально</button>
+            <button onclick="startGame('ai', 'hard')">Важко</button>
             <button class="btn-white" onclick="hideDifficulty()">← Назад</button>
         </div>
 
@@ -139,7 +150,7 @@
         </div>
 
         <div class="menu-buttons hidden" id="joinMenuBtns">
-            <input type="text" id="roomCodeInput" placeholder="Код (напр. AX55)" maxlength="5">
+            <input type="text" id="roomCodeInput" placeholder="Код (AX55)" maxlength="5">
             <button onclick="joinRoom()">Підключитись</button>
             <button class="btn-white" onclick="hideJoinMenu()">← Назад</button>
         </div>
@@ -155,15 +166,17 @@
 
     <div id="gameOverScreen" class="overlay hidden">
         <h1 id="winnerText">WINNER!</h1>
-        <p id="finalScore" style="font-size: 1.2rem; margin-bottom: 20px; color: #fef08a; text-align: center;"></p>
+        <p id="finalScore" style="font-size: 1.5rem; margin-bottom: 25px; color: #ffea00; font-weight: bold; text-shadow: 2px 2px 0 #ff007f; text-align: center;"></p>
         <button onclick="returnToMenu()">В Головне Меню</button>
     </div>
 
-    <!-- Контейнер для віртуального джойстика -->
+    <!-- Статичні збільшені кнопки -->
     <div id="controlsP1" class="controls-container hidden">
-        <div id="joystick-base" class="hidden">
-            <div id="joystick-knob"></div>
+        <div class="left-right-group">
+            <div class="touch-btn" id="btnLeftP1">←</div>
+            <div class="touch-btn" id="btnRightP1">→</div>
         </div>
+        <div class="touch-btn" id="btnJumpP1">↑</div>
     </div>
 </div>
 
@@ -184,47 +197,87 @@
     let shakeFrames = 0;
     let lastTime = 0; 
 
-    let audioCtx = null; let bgmInterval = null; let bgmStep = 0;
+    // --- 8-BIT АУДІО СИСТЕМА ---
+    let audioCtx = null; 
+    let bgmStarted = false;
+    let bgmStep = 0;
+    
     function initAudio() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
     
     function playNote(freq, type, startTime, duration, vol) {
-        if(!audioCtx) return; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        if(!audioCtx) return; 
+        const osc = audioCtx.createOscillator(); 
+        const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.type = type; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(vol, startTime); gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        gain.gain.setValueAtTime(vol, startTime); 
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
         osc.start(startTime); osc.stop(startTime + duration);
     }
 
+    // Безперервний фоновий 8-бітний саундтрек
+    function startContinuousBGM() {
+        if (bgmStarted) return;
+        initAudio();
+        bgmStarted = true;
+        
+        // Ретро 8-бітна мелодія
+        const melody = [
+            392.00, 392.00, 587.33, 587.33, 659.25, 659.25, 587.33, 0, // G G D D E E D
+            523.25, 523.25, 493.88, 493.88, 440.00, 440.00, 392.00, 0, // C C B B A A G
+            587.33, 587.33, 523.25, 523.25, 493.88, 493.88, 440.00, 0, // D D C C B B A
+            587.33, 587.33, 523.25, 523.25, 493.88, 493.88, 440.00, 0  // D D C C B B A
+        ];
+        const bass = [
+            196.00, 196.00, 196.00, 196.00, // G
+            130.81, 130.81, 130.81, 130.81, // C
+            146.83, 146.83, 146.83, 146.83, // D
+            146.83, 146.83, 146.83, 146.83  // D
+        ];
+
+        setInterval(() => {
+            if(audioCtx && audioCtx.state === 'running') {
+                // Мелодія (Square wave - класика 8-біт)
+                let freq = melody[bgmStep % melody.length];
+                if (freq > 0) playNote(freq, 'square', audioCtx.currentTime, 0.15, 0.05);
+                
+                // Бас-лінія 
+                if (bgmStep % 2 === 0) {
+                    let bassFreq = bass[Math.floor((bgmStep % melody.length) / 8)];
+                    playNote(bassFreq, 'square', audioCtx.currentTime, 0.25, 0.07);
+                }
+                bgmStep++;
+            }
+        }, 180); // Темп музики
+    }
+
+    // Запуск музики при будь-якому дотику до екрана
+    window.addEventListener('touchstart', startContinuousBGM, {once:true});
+    window.addEventListener('mousedown', startContinuousBGM, {once:true});
+
+    // Ігрові звукові ефекти
     function playSound(type) {
         if (!audioCtx) return; const now = audioCtx.currentTime;
-        if (type === 'jump') { playNote(300, 'sine', now, 0.15, 0.1); playNote(400, 'sine', now+0.05, 0.1, 0.05); } 
-        else if (type === 'hit') { playNote(600, 'square', now, 0.1, 0.15); } 
-        else if (type === 'smash') { playNote(200, 'square', now, 0.15, 0.3); playNote(100, 'sawtooth', now, 0.2, 0.3); } 
+        if (type === 'jump') { playNote(300, 'square', now, 0.15, 0.1); playNote(450, 'square', now+0.05, 0.1, 0.05); } 
+        else if (type === 'hit') { playNote(800, 'square', now, 0.1, 0.15); playNote(1200, 'square', now+0.05, 0.1, 0.1); } 
+        else if (type === 'smash') { playNote(200, 'sawtooth', now, 0.15, 0.3); playNote(100, 'sawtooth', now, 0.2, 0.3); } 
         else if (type === 'wall') { playNote(250, 'triangle', now, 0.1, 0.1); } 
-        else if (type === 'score') { playNote(300, 'sawtooth', now, 0.4, 0.2); playNote(150, 'sawtooth', now+0.1, 0.3, 0.2); tg.HapticFeedback.notificationOccurred('success'); } 
-        else if (type === 'set_win') { playNote(440, 'square', now, 0.15, 0.1); playNote(554, 'square', now + 0.15, 0.3, 0.1); tg.HapticFeedback.notificationOccurred('success'); } 
-        else if (type === 'match_win') { playNote(440, 'square', now, 0.15, 0.15); playNote(554, 'square', now + 0.15, 0.15, 0.15); playNote(659, 'square', now + 0.30, 0.15, 0.15); playNote(880, 'square', now + 0.45, 0.4, 0.15); tg.HapticFeedback.notificationOccurred('success'); } 
+        else if (type === 'score') { playNote(400, 'square', now, 0.4, 0.2); playNote(300, 'square', now+0.1, 0.3, 0.2); tg.HapticFeedback.notificationOccurred('success'); } 
+        else if (type === 'set_win') { playNote(500, 'square', now, 0.15, 0.1); playNote(650, 'square', now + 0.15, 0.3, 0.1); tg.HapticFeedback.notificationOccurred('success'); } 
+        else if (type === 'match_win') { playNote(523, 'square', now, 0.15, 0.15); playNote(659, 'square', now + 0.15, 0.15, 0.15); playNote(783, 'square', now + 0.30, 0.15, 0.15); playNote(1046, 'square', now + 0.45, 0.4, 0.15); tg.HapticFeedback.notificationOccurred('success'); } 
         else if (type === 'whistle') {
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
-            osc.frequency.setValueAtTime(2000, now); osc.frequency.linearRampToValueAtTime(2400, now + 0.3);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'square';
+            osc.frequency.setValueAtTime(1500, now); osc.frequency.linearRampToValueAtTime(2000, now + 0.3);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.001, now + 0.4);
             osc.start(now); osc.stop(now + 0.4);
         }
     }
-
-    function startBGM() {
-        if (bgmInterval) clearInterval(bgmInterval);
-        const notes = [329.63, 392.00, 440.00, 523.25, 659.25, 523.25, 440.00, 392.00]; 
-        bgmStep = 0;
-        bgmInterval = setInterval(() => {
-            if (gameState === 'playing' && audioCtx) { playNote(notes[bgmStep % notes.length], 'triangle', audioCtx.currentTime, 0.4, 0.015); bgmStep++; }
-        }, 350); 
-    }
-    function stopBGM() { if (bgmInterval) clearInterval(bgmInterval); }
 
     socket.on('playerRole', (role) => { myRole = role; });
 
@@ -238,7 +291,7 @@
         p1.isAI = false; p2.isAI = false; 
         score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 };
         p1.x = p1.startX; p2.x = p2.startX; p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
-        particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); startBGM(); 
+        particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); 
     });
 
     socket.on('updateOpponent', (data) => {
@@ -266,20 +319,27 @@
                 playSound(data.type); 
                 if (data.type === 'smash') { shakeFrames = 15; tg.HapticFeedback.impactOccurred('heavy'); } 
                 else { tg.HapticFeedback.impactOccurred('medium'); }
-                let p = data.pName === 'p1' ? p1 : p2; p.hitTimer = 5; spawnDust(ball.x, ball.y + ball.radius, data.type === 'smash' ? 15 : 5); 
+                let p = data.pName === 'p1' ? p1 : p2; p.hitTimer = 5; spawnDust(ball.x, ball.y + ball.radius, data.type === 'smash' ? 15 : 5, '#ffea00'); 
             }
             if (data.type === 'wall') playSound('wall');
-            if (data.type === 'jump') { playSound('jump'); let p = data.pName === 'p1' ? p1 : p2; spawnDust(p.x, p.y + p.radius); }
+            if (data.type === 'jump') { playSound('jump'); let p = data.pName === 'p1' ? p1 : p2; spawnDust(p.x, p.y + p.radius, 10, '#00e5ff'); }
         }
     });
 
     let particles = [];
     class Dust {
-        constructor(x, y) { this.x = x; this.y = y; this.vx = (Math.random() - 0.5) * 4; this.vy = Math.random() * -3; this.life = 1.0; this.size = Math.random() * 8 + 4; }
+        constructor(x, y, color) { 
+            this.x = x; this.y = y; this.vx = (Math.random() - 0.5) * 6; this.vy = Math.random() * -4; 
+            this.life = 1.0; this.size = Math.random() * 8 + 4; this.color = color;
+        }
         update(timeScale) { this.x += this.vx * timeScale; this.y += this.vy * timeScale; this.life -= 0.05 * timeScale; }
-        draw() { ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
+        draw() { 
+            ctx.fillStyle = this.color; ctx.globalAlpha = this.life;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
     }
-    function spawnDust(x, y, count=10) { for(let i=0; i<count; i++) particles.push(new Dust(x, y)); }
+    function spawnDust(x, y, count=10, color='#fff') { for(let i=0; i<count; i++) particles.push(new Dust(x, y, color)); }
 
     const GRAVITY = 0.6; const PTS_TO_WIN_SET = 7; const SETS_TO_WIN_MATCH = 3;
     let gameState = 'menu'; let difficulty = 'normal';
@@ -291,14 +351,14 @@
             this.startX = x; this.x = x; this.y = 350; this.targetX = x; this.targetY = 350;
             this.baseRadius = 45; this.radius = this.baseRadius;
             this.vx = 0; this.vy = 0; this.jumpPower = -12; this.color = color; this.isAI = isAI; this.isGrounded = true;
-            this.speed = 5.5; this.squash = 1; this.stretch = 1; this.tilt = 0; this.hitTimer = 0;
+            this.speed = 6.0; this.squash = 1; this.stretch = 1; this.tilt = 0; this.hitTimer = 0;
             this.jumpCooldown = 0; 
         }
 
         updateAI(ball, timeScale) {
-            let aiSpeed = 4.5; let reactionDistance = 70; let jumpChance = 1;
+            let aiSpeed = 5.0; let reactionDistance = 70; let jumpChance = 1;
             if (difficulty === 'easy') { aiSpeed = 3.5; reactionDistance = 50; jumpChance = 0.5; } 
-            else if (difficulty === 'hard') { aiSpeed = 6.5; reactionDistance = 100; jumpChance = 1; }
+            else if (difficulty === 'hard') { aiSpeed = 7.0; reactionDistance = 100; jumpChance = 1; }
             
             if (this.jumpCooldown > 0) this.jumpCooldown -= timeScale;
 
@@ -308,7 +368,7 @@
                 if (ball.vy > 0 && ball.y > 100 && ball.y < 340 && this.isGrounded && Math.abs(this.x - ball.x) < reactionDistance) {
                     if (this.jumpCooldown <= 0 && Math.random() <= jumpChance) { 
                         this.vy = this.jumpPower; this.isGrounded = false; 
-                        spawnDust(this.x, this.y + this.radius); playSound('jump'); 
+                        spawnDust(this.x, this.y + this.radius, 10, '#ff007f'); playSound('jump'); 
                         this.jumpCooldown = 45; 
                     }
                 }
@@ -334,7 +394,7 @@
                 if (this.hitTimer > 0) { this.stretch = 0.8; this.squash = 1.2; this.hitTimer -= timeScale; }
                 
                 if (this.y + this.radius >= canvas.height) {
-                    if (!this.isGrounded && this.vy > 5) { spawnDust(this.x, canvas.height); this.stretch = 0.8; this.squash = 1.2; }
+                    if (!this.isGrounded && this.vy > 5) { spawnDust(this.x, canvas.height, 10, '#fff'); this.stretch = 0.8; this.squash = 1.2; }
                     this.y = canvas.height - this.radius; this.vy = 0; this.isGrounded = true;
                 } else { this.isGrounded = false; }
                 
@@ -347,13 +407,25 @@
         }
         draw() {
             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.tilt); if (this.startX < 400) ctx.scale(-1, 1);
-            ctx.scale(this.squash, this.stretch); ctx.font = `${this.radius * 1.6}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.fillText('🐧', 0, 5); ctx.restore();
+            ctx.scale(this.squash, this.stretch); 
+            
+            // Яскравий неоновий персонаж
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2);
+            ctx.fillStyle = this.color; ctx.fill();
+            ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.stroke();
+            
+            // Око
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(15, -10, 10, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(20, -10, 4, 0, Math.PI*2); ctx.fill();
+            
+            // Дзьоб
+            ctx.fillStyle = '#ffea00'; ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(45, 5); ctx.lineTo(25, 10); ctx.fill();
+            ctx.restore();
         }
     }
 
     class Ball {
-        constructor() { this.radius = 25; this.rotation = 0; this.lastHitter = null; this.crossedNet = false; this.trail = []; this.reset(1); }
+        constructor() { this.radius = 22; this.rotation = 0; this.lastHitter = null; this.crossedNet = false; this.trail = []; this.reset(1); }
         reset(server) { this.x = server === 1 ? 200 : 600; this.y = 80; this.targetX = this.x; this.targetY = this.y; this.vx = 0; this.vy = 0; this.speedMultiplier = 1; this.lastHitter = null; this.crossedNet = false; this.trail = []; }
 
         update(p1, p2, isHost, timeScale) {
@@ -367,7 +439,7 @@
             }
 
             let speed = Math.abs(this.vx) + Math.abs(this.vy);
-            if (speed > 12) { this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 8) this.trail.shift(); } else if (this.trail.length > 0) { this.trail.shift(); }
+            if (speed > 10) { this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 8) this.trail.shift(); } else if (this.trail.length > 0) { this.trail.shift(); }
 
             if (isHost) {
                 if (this.lastHitter === p1 && !this.crossedNet && this.x > net.x + net.width) { this.crossedNet = true; p1.radius *= 1.1; } 
@@ -402,7 +474,7 @@
             let dx = this.x - p.x; let dy = this.y - p.y; let distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < this.radius + p.radius) {
                 let isSmash = !p.isGrounded && Math.abs(p.vy) < 3.5 && this.y < p.y - 10;
-                let bounceForce = isSmash ? 16 : 11; 
+                let bounceForce = isSmash ? 17 : 12; 
                 let angle = Math.atan2(dy, dx); 
                 this.vx = Math.cos(angle) * bounceForce; this.vy = Math.sin(angle) * bounceForce; 
                 
@@ -415,7 +487,7 @@
                 this.lastHitter = p; this.crossedNet = false; p.hitTimer = 5; 
                 
                 let hitType = isSmash ? 'smash' : 'hit';
-                playSound(hitType); spawnDust(this.x, this.y + this.radius, isSmash ? 20 : 5);
+                playSound(hitType); spawnDust(this.x, this.y + this.radius, isSmash ? 20 : 5, '#ffea00');
                 if (isSmash) { shakeFrames = 15; tg.HapticFeedback.impactOccurred('heavy'); } 
                 else { tg.HapticFeedback.impactOccurred('medium'); }
                 if (myRole === 'p1') socket.emit('gameEvent', { roomId, type: hitType, pName: p === p1 ? 'p1' : 'p2' });
@@ -425,18 +497,25 @@
         draw() {
             for(let i=0; i<this.trail.length; i++) {
                 let t = this.trail[i]; let ratio = (i + 1) / this.trail.length;
-                ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2); ctx.fillStyle = `rgba(254, 240, 138, ${0.4 * ratio})`; ctx.fill();
+                ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2); 
+                ctx.fillStyle = `rgba(255, 234, 0, ${0.5 * ratio})`; ctx.fill();
             }
             ctx.save(); ctx.translate(this.x, this.y); this.rotation += this.vx * 0.05; ctx.rotate(this.rotation);
-            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fillStyle = '#f8fafc'; ctx.shadowBlur = 25; ctx.shadowColor = '#bae6fd'; 
-            ctx.fill(); ctx.closePath(); ctx.shadowBlur = 0; ctx.font = `${this.radius * 1.3}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('❄️', 0, 1); ctx.restore();
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); 
+            ctx.fillStyle = '#ffea00'; ctx.shadowBlur = 30; ctx.shadowColor = '#ffea00'; 
+            ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+            
+            // Візерунок м'яча
+            ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(-15, -10); ctx.lineTo(15, 10); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-15, 10); ctx.lineTo(15, -10); ctx.stroke();
+            ctx.restore();
         }
     }
 
-    let p1 = new Player(150, '#f97316'); let p2 = new Player(650, '#fef08a', true); let ball = new Ball();
+    let p1 = new Player(150, '#ff007f'); let p2 = new Player(650, '#00e5ff', true); let ball = new Ball();
     const keys = { a: false, d: false, w: false };
 
-    // Управління на клавіатурі (для тестів на ПК)
     window.addEventListener('keydown', (e) => {
         let k = e.key; let pRef = (myRole === 'p2') ? p2 : p1;
         if (k==='a' || k==='A' || k==='ф' || k==='Ф' || e.code === 'ArrowLeft') keys.a = true;
@@ -444,7 +523,7 @@
         if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') { 
             keys.w = true; 
             if (pRef.isGrounded && gameState === 'playing') {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
+                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#00e5ff'); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
         }
@@ -456,102 +535,26 @@
         if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') keys.w = false;
     });
 
-    // --- ДИНАМІЧНИЙ ДЖОЙСТИК ТА СТРИБОК ---
-    const controlsContainer = document.getElementById('controlsP1');
-    const joystickBase = document.getElementById('joystick-base');
-    const joystickKnob = document.getElementById('joystick-knob');
-    
-    let joyTouchId = null;
-    let jumpTouchId = null;
-    let joyBaseX = 0;
-    let joyBaseY = 0;
-    const maxJoyRadius = 45; // Максимальне відхилення стіка
-
-    function handleTouchStart(e) {
-        if(e.type !== 'touchend' && e.type !== 'touchcancel') e.preventDefault();
-        if(gameState !== 'playing') return;
-
-        let width = window.innerWidth;
-
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            let touch = e.changedTouches[i];
-            
-            // Ліва половина екрана — активуємо джойстик
-            if (touch.clientX < width / 2 && joyTouchId === null) {
-                joyTouchId = touch.identifier;
-                joyBaseX = touch.clientX;
-                joyBaseY = touch.clientY;
-                
-                joystickBase.style.left = joyBaseX + 'px';
-                joystickBase.style.top = joyBaseY + 'px';
-                joystickKnob.style.transform = `translate(-50%, -50%)`;
-                joystickBase.classList.remove('hidden');
-            } 
-            // Права половина екрана — стрибок
-            else if (touch.clientX >= width / 2) {
-                jumpTouchId = touch.identifier;
-                keys.w = true;
-                let pRef = (myRole === 'p2') ? p2 : p1;
-                if (pRef.isGrounded) {
-                    pRef.vy = pRef.jumpPower; pRef.isGrounded = false; 
-                    spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
-                    if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
-                }
+    // --- ПРИВ'ЯЗКА СТАТИЧНИХ КНОПОК ---
+    const addTouch = (id, key) => {
+        const btn = document.getElementById(id);
+        const startAction = (e) => { 
+            e.preventDefault(); if(gameState !== 'playing') return;
+            keys[key] = true; let pRef = (myRole === 'p2') ? p2 : p1;
+            if(key==='w' && pRef.isGrounded) {
+                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#00e5ff'); playSound('jump');
+                if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
-        }
-    }
-
-    function handleTouchMove(e) {
-        e.preventDefault();
-        if(gameState !== 'playing') return;
-
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            let touch = e.changedTouches[i];
-            
-            if (touch.identifier === joyTouchId) {
-                let dx = touch.clientX - joyBaseX;
-                let dy = touch.clientY - joyBaseY;
-                let distance = Math.sqrt(dx*dx + dy*dy);
-                
-                // Обмежуємо вихід стіка за межі бази
-                if (distance > maxJoyRadius) {
-                    let angle = Math.atan2(dy, dx);
-                    dx = Math.cos(angle) * maxJoyRadius;
-                    dy = Math.sin(angle) * maxJoyRadius;
-                }
-                
-                joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-                
-                // Зона нечутливості (deadzone), щоб не рухався від мікродрижання пальця
-                if (dx < -15) { keys.a = true; keys.d = false; }
-                else if (dx > 15) { keys.a = false; keys.d = true; }
-                else { keys.a = false; keys.d = false; }
-            }
-        }
-    }
-
-    function handleTouchEnd(e) {
-        if(e.type !== 'touchend' && e.type !== 'touchcancel') e.preventDefault();
+            btn.style.background = 'rgba(0, 229, 255, 0.6)';
+        };
+        const endAction = (e) => { e.preventDefault(); keys[key] = false; btn.style.background = 'rgba(0, 229, 255, 0.2)'; };
         
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            let touch = e.changedTouches[i];
-            
-            if (touch.identifier === joyTouchId) {
-                joyTouchId = null;
-                joystickBase.classList.add('hidden');
-                keys.a = false;
-                keys.d = false;
-            } else if (touch.identifier === jumpTouchId) {
-                jumpTouchId = null;
-                keys.w = false;
-            }
-        }
-    }
+        btn.addEventListener('touchstart', startAction, {passive: false});
+        btn.addEventListener('touchend', endAction, {passive: false});
+        btn.addEventListener('touchcancel', endAction, {passive: false});
+    };
 
-    controlsContainer.addEventListener('touchstart', handleTouchStart, {passive: false});
-    controlsContainer.addEventListener('touchmove', handleTouchMove, {passive: false});
-    controlsContainer.addEventListener('touchend', handleTouchEnd, {passive: false});
-    controlsContainer.addEventListener('touchcancel', handleTouchEnd, {passive: false});
+    addTouch('btnLeftP1', 'a'); addTouch('btnRightP1', 'd'); addTouch('btnJumpP1', 'w');
 
     // Логіка меню
     function showDifficulty() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('diffMenuBtns').classList.remove('hidden'); }
@@ -570,7 +573,7 @@
     function createRoom() {
         initAudio(); myRole = null; roomId = generateRoomCode(); socket.emit('joinRoom', roomId);
         document.getElementById('menuScreen').classList.add('hidden');
-        document.getElementById('winnerText').innerHTML = `КОД КІМНАТИ:<br><span style="color:#fff">${roomId}</span><br><br><span style="font-size:1.2rem">ОЧІКУВАННЯ СУПЕРНИКА...</span>`;
+        document.getElementById('winnerText').innerHTML = `КОД КІМНАТИ:<br><span style="color:#00e5ff">${roomId}</span><br><br><span style="font-size:1.2rem; color:#fff;">ОЧІКУВАННЯ СУПЕРНИКА...</span>`;
         document.getElementById('finalScore').innerText = ""; document.getElementById('gameOverScreen').classList.remove('hidden');
     }
 
@@ -588,26 +591,26 @@
         document.getElementById('controlsP1').classList.remove('hidden'); document.getElementById('menuScreen').classList.add('hidden');
         document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.remove('hidden'); document.getElementById('btnPause').classList.remove('hidden');
         score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 }; p1.x = p1.startX; p2.x = p2.startX; p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
-        particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); startBGM(); 
+        particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); 
     }
 
     function togglePause() {
         if (gameState === 'playing') {
-            gameState = 'paused'; document.getElementById('pauseScreen').classList.remove('hidden'); document.getElementById('controlsP1').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.add('hidden'); stopBGM();
+            gameState = 'paused'; document.getElementById('pauseScreen').classList.remove('hidden'); document.getElementById('controlsP1').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.add('hidden');
         } else if (gameState === 'paused') {
-            gameState = 'playing'; document.getElementById('pauseScreen').classList.add('hidden'); document.getElementById('controlsP1').classList.remove('hidden'); document.getElementById('btnPause').classList.remove('hidden'); document.getElementById('btnInGameMenu').classList.remove('hidden'); startBGM();
+            gameState = 'playing'; document.getElementById('pauseScreen').classList.add('hidden'); document.getElementById('controlsP1').classList.remove('hidden'); document.getElementById('btnPause').classList.remove('hidden'); document.getElementById('btnInGameMenu').classList.remove('hidden'); 
         }
     }
 
     function checkMatchWin(networkWinner = null) {
-        playSound('whistle'); setTimeout(() => playSound('match_win'), 500); stopBGM(); tg.HapticFeedback.notificationOccurred('success');
+        playSound('whistle'); setTimeout(() => playSound('match_win'), 500); tg.HapticFeedback.notificationOccurred('success');
         let text = myRole ? (networkWinner === myRole ? "ВИ ПЕРЕМОГЛИ!" : "СУПЕРНИК ПЕРЕМІГ!") : (sets.p1 >= SETS_TO_WIN_MATCH ? "ВИ ПЕРЕМОГЛИ!" : "ШІ ПЕРЕМІГ!");
         gameState = 'gameover'; document.getElementById('winnerText').innerText = text; document.getElementById('finalScore').innerText = `Сети: ${sets.p1} - ${sets.p2}`;
         document.getElementById('gameOverScreen').classList.remove('hidden'); document.getElementById('controlsP1').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden');
     }
 
     function returnToMenu() {
-        gameState = 'menu'; stopBGM();
+        gameState = 'menu';
         document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('pauseScreen').classList.add('hidden');
         document.getElementById('btnInGameMenu').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden'); document.getElementById('controlsP1').classList.add('hidden');
         document.getElementById('diffMenuBtns').classList.add('hidden'); document.getElementById('onlineMenuBtns').classList.add('hidden'); document.getElementById('joinMenuBtns').classList.add('hidden');
@@ -615,12 +618,16 @@
     }
 
     function drawScore() {
-        ctx.font = 'bold 50px Courier New'; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.textAlign = 'center'; ctx.fillText(`${score.p1} - ${score.p2}`, canvas.width / 2, 70);
-        ctx.font = '20px Courier New'; ctx.fillStyle = '#fef08a'; ctx.fillText(`СЕТИ: ${sets.p1} - ${sets.p2}`, canvas.width / 2, 30);
+        ctx.font = '900 50px Courier New'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; 
+        ctx.shadowBlur = 10; ctx.shadowColor = '#00e5ff';
+        ctx.fillText(`${score.p1} - ${score.p2}`, canvas.width / 2, 70);
+        ctx.font = 'bold 20px Courier New'; ctx.fillStyle = '#ffea00'; 
+        ctx.fillText(`СЕТИ: ${sets.p1} - ${sets.p2}`, canvas.width / 2, 30);
+        ctx.shadowBlur = 0;
     }
     
     function drawNet() {
-        ctx.fillStyle = '#f8fafc'; ctx.shadowBlur = 15; ctx.shadowColor = '#0ea5e9'; ctx.fillRect(net.x, net.y, net.width, net.height);
+        ctx.fillStyle = '#00e5ff'; ctx.shadowBlur = 20; ctx.shadowColor = '#00e5ff'; ctx.fillRect(net.x, net.y, net.width, net.height);
         ctx.beginPath(); ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2); ctx.fill(); ctx.closePath(); ctx.shadowBlur = 0;
     }
 
@@ -650,7 +657,7 @@
         
         if (gameState !== 'menu') { 
             ctx.save();
-            if (shakeFrames > 0) { ctx.translate((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10); shakeFrames--; }
+            if (shakeFrames > 0) { ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12); shakeFrames--; }
             particles.forEach(p => p.draw()); drawNet(); p1.draw(); p2.draw(); ball.draw(); drawScore(); 
             ctx.restore();
         }
