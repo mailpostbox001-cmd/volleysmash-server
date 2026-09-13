@@ -59,12 +59,26 @@
         }
         #btnInGameMenu { left: 15px; } #btnPause { right: 15px; }
         
-        /* Повністю прозорий контейнер на весь екран для зчитування дотиків */
+        /* Шар для перехоплення дотиків */
         .controls-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5; pointer-events: none; opacity: 0;
+            z-index: 5; pointer-events: none;
         }
         .controls-container:not(.hidden) { pointer-events: auto; }
+
+        /* Динамічний візуальний джойстик */
+        #joystick-base {
+            position: absolute; width: 110px; height: 110px;
+            border-radius: 50%; background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 10;
+        }
+        #joystick-knob {
+            position: absolute; width: 55px; height: 55px;
+            border-radius: 50%; background: rgba(255, 255, 255, 0.85);
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
 
         #rotatePrompt {
             display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -145,8 +159,12 @@
         <button onclick="returnToMenu()">В Головне Меню</button>
     </div>
 
-    <!-- Невидимий шар керування на весь екран -->
-    <div id="controlsP1" class="controls-container hidden"></div>
+    <!-- Контейнер для віртуального джойстика -->
+    <div id="controlsP1" class="controls-container hidden">
+        <div id="joystick-base" class="hidden">
+            <div id="joystick-knob"></div>
+        </div>
+    </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -418,6 +436,7 @@
     let p1 = new Player(150, '#f97316'); let p2 = new Player(650, '#fef08a', true); let ball = new Ball();
     const keys = { a: false, d: false, w: false };
 
+    // Управління на клавіатурі (для тестів на ПК)
     window.addEventListener('keydown', (e) => {
         let k = e.key; let pRef = (myRole === 'p2') ? p2 : p1;
         if (k==='a' || k==='A' || k==='ф' || k==='Ф' || e.code === 'ArrowLeft') keys.a = true;
@@ -437,69 +456,102 @@
         if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') keys.w = false;
     });
 
-    // --- НЕВИДИМІ ЗОНИ КЕРУВАННЯ ---
+    // --- ДИНАМІЧНИЙ ДЖОЙСТИК ТА СТРИБОК ---
     const controlsContainer = document.getElementById('controlsP1');
+    const joystickBase = document.getElementById('joystick-base');
+    const joystickKnob = document.getElementById('joystick-knob');
+    
+    let joyTouchId = null;
+    let jumpTouchId = null;
+    let joyBaseX = 0;
+    let joyBaseY = 0;
+    const maxJoyRadius = 45; // Максимальне відхилення стіка
 
-    function handleTouches(e) {
-        if(e.type !== 'touchend' && e.type !== 'touchcancel') {
-            e.preventDefault();
-        }
+    function handleTouchStart(e) {
+        if(e.type !== 'touchend' && e.type !== 'touchcancel') e.preventDefault();
         if(gameState !== 'playing') return;
-
-        let leftPressed = false;
-        let rightPressed = false;
-        let jumpPressed = false;
-        let jumpTriggeredNow = false;
 
         let width = window.innerWidth;
 
-        // Перебираємо всі активні дотики на екрані
-        for (let i = 0; i < e.touches.length; i++) {
-            let touch = e.touches[i];
-            let x = touch.clientX;
-
-            if (x > width / 2) {
-                // Права половина = Стрибок
-                jumpPressed = true;
-                // Перевіряємо, чи це НОВИЙ дотик, щоб не було безкінечних стрибків
-                if (e.type === 'touchstart') {
-                    for(let j = 0; j < e.changedTouches.length; j++){
-                        if(e.changedTouches[j].identifier === touch.identifier){
-                            jumpTriggeredNow = true;
-                        }
-                    }
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            let touch = e.changedTouches[i];
+            
+            // Ліва половина екрана — активуємо джойстик
+            if (touch.clientX < width / 2 && joyTouchId === null) {
+                joyTouchId = touch.identifier;
+                joyBaseX = touch.clientX;
+                joyBaseY = touch.clientY;
+                
+                joystickBase.style.left = joyBaseX + 'px';
+                joystickBase.style.top = joyBaseY + 'px';
+                joystickKnob.style.transform = `translate(-50%, -50%)`;
+                joystickBase.classList.remove('hidden');
+            } 
+            // Права половина екрана — стрибок
+            else if (touch.clientX >= width / 2) {
+                jumpTouchId = touch.identifier;
+                keys.w = true;
+                let pRef = (myRole === 'p2') ? p2 : p1;
+                if (pRef.isGrounded) {
+                    pRef.vy = pRef.jumpPower; pRef.isGrounded = false; 
+                    spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
+                    if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
                 }
-            } else {
-                // Ліва половина = Рух
-                if (x < width / 4) {
-                    leftPressed = true; // 0-25% екрана
-                } else {
-                    rightPressed = true; // 25-50% екрана
-                }
-            }
-        }
-
-        // Оновлюємо стан клавіш на основі всіх пальців
-        keys.a = leftPressed;
-        keys.d = rightPressed;
-        keys.w = jumpPressed;
-
-        // Викликаємо стрибок лише один раз в момент торкання
-        if (jumpTriggeredNow) {
-            let pRef = (myRole === 'p2') ? p2 : p1;
-            if (pRef.isGrounded) {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; 
-                spawnDust(pRef.x, pRef.y + pRef.radius); playSound('jump');
-                if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
         }
     }
 
-    // Слухаємо всі події дотику на повністю прозорому контейнері
-    controlsContainer.addEventListener('touchstart', handleTouches, {passive: false});
-    controlsContainer.addEventListener('touchmove', handleTouches, {passive: false});
-    controlsContainer.addEventListener('touchend', handleTouches, {passive: false});
-    controlsContainer.addEventListener('touchcancel', handleTouches, {passive: false});
+    function handleTouchMove(e) {
+        e.preventDefault();
+        if(gameState !== 'playing') return;
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            let touch = e.changedTouches[i];
+            
+            if (touch.identifier === joyTouchId) {
+                let dx = touch.clientX - joyBaseX;
+                let dy = touch.clientY - joyBaseY;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                
+                // Обмежуємо вихід стіка за межі бази
+                if (distance > maxJoyRadius) {
+                    let angle = Math.atan2(dy, dx);
+                    dx = Math.cos(angle) * maxJoyRadius;
+                    dy = Math.sin(angle) * maxJoyRadius;
+                }
+                
+                joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                
+                // Зона нечутливості (deadzone), щоб не рухався від мікродрижання пальця
+                if (dx < -15) { keys.a = true; keys.d = false; }
+                else if (dx > 15) { keys.a = false; keys.d = true; }
+                else { keys.a = false; keys.d = false; }
+            }
+        }
+    }
+
+    function handleTouchEnd(e) {
+        if(e.type !== 'touchend' && e.type !== 'touchcancel') e.preventDefault();
+        
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            let touch = e.changedTouches[i];
+            
+            if (touch.identifier === joyTouchId) {
+                joyTouchId = null;
+                joystickBase.classList.add('hidden');
+                keys.a = false;
+                keys.d = false;
+            } else if (touch.identifier === jumpTouchId) {
+                jumpTouchId = null;
+                keys.w = false;
+            }
+        }
+    }
+
+    controlsContainer.addEventListener('touchstart', handleTouchStart, {passive: false});
+    controlsContainer.addEventListener('touchmove', handleTouchMove, {passive: false});
+    controlsContainer.addEventListener('touchend', handleTouchEnd, {passive: false});
+    controlsContainer.addEventListener('touchcancel', handleTouchEnd, {passive: false});
 
     // Логіка меню
     function showDifficulty() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('diffMenuBtns').classList.remove('hidden'); }
