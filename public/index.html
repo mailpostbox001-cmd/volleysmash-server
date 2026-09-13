@@ -9,18 +9,25 @@
     
     <style>
         body {
-            margin: 0; padding: 0; background-color: #2b0f4c; color: #fff;
+            margin: 0; padding: 0; background-color: #87CEEB; color: #fff;
             font-family: 'Courier New', Courier, monospace; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
             height: var(--tg-viewport-stable-height, 100vh); 
             width: 100vw; touch-action: none; user-select: none; -webkit-user-select: none;
         }
         
-        /* Яскравий аркадний фон */
+        /* Градієнт Пляжу: Небо, Море, Пісок */
         #gameContainer {
             position: relative; width: 100vw; height: 100%;
-            background: linear-gradient(to bottom, #2b0f4c 0%, #7a1b6c 40%, #d81b60 70%, #ff6f00 100%);
-            box-shadow: 0 0 40px #ff007f inset; overflow: hidden;
+            background: linear-gradient(to bottom, 
+                #87CEEB 0%,     /* Блакитне небо */
+                #E0F6FF 50%,    /* Світліше небо біля горизонту */
+                #1E90FF 50%,    /* Темно-синє море */
+                #00BFFF 85%,    /* Світліше море біля берега */
+                #F4A460 85%,    /* Темніший пісок (лінія берега) */
+                #FFDEAD 100%    /* Світлий пісок */
+            );
+            overflow: hidden;
         }
         
         canvas { display: block; width: 100%; height: 100%; object-fit: fill; }
@@ -28,48 +35,48 @@
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(20, 5, 40, 0.85); z-index: 10;
+            background: rgba(0, 50, 100, 0.7); z-index: 10;
         }
         
         h1 {
-            color: #00e5ff; text-shadow: 4px 4px 0 #ff007f, 0 0 20px #00e5ff;
-            font-size: 3.8rem; margin-bottom: 25px; text-align: center; font-weight: 900;
+            color: #FFD700; text-shadow: 3px 3px 0 #FF4500, 0 0 15px #FFD700;
+            font-size: 4rem; margin-bottom: 25px; text-align: center; font-weight: 900;
         }
         
         .menu-buttons {
             display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 400px;
         }
 
+        /* Сонячні літні кнопки */
         button {
             appearance: none; -webkit-appearance: none;
-            background: #ff007f !important; border: 3px solid #00e5ff !important;
-            color: #fff !important; padding: 14px 20px; font-size: 1.2rem; font-weight: bold;
+            background: #FF6347 !important; border: 3px solid #FFF !important;
+            color: #FFF !important; padding: 14px 20px; font-size: 1.2rem; font-weight: bold;
             font-family: inherit; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 6px 0 #00e5ff, 0 0 15px rgba(255,0,127,0.5) !important; 
+            box-shadow: 0 6px 0 #CD5C5C, 0 0 10px rgba(0,0,0,0.3) !important; 
             transition: 0.1s; border-radius: 12px; text-shadow: 1px 1px 0 #000;
         }
         button:active { 
-            transform: translateY(6px); box-shadow: 0 0 0 #00e5ff, 0 0 10px rgba(255,0,127,0.5) !important; 
-            background: #d81b60 !important; 
+            transform: translateY(6px); box-shadow: 0 0 0 #CD5C5C, 0 0 5px rgba(0,0,0,0.3) !important; 
+            background: #E9967A !important; 
         }
         
         .btn-white { 
-            background: #00e5ff !important; border-color: #ffea00 !important; color: #000 !important; 
-            box-shadow: 0 6px 0 #ffea00 !important; text-shadow: none;
+            background: #20B2AA !important; border-color: #FFF !important; color: #FFF !important; 
+            box-shadow: 0 6px 0 #008B8B !important; text-shadow: 1px 1px 0 #000;
         }
-        .btn-white:active { background: #00b8cc !important; box-shadow: 0 0 0 #ffea00 !important; }
+        .btn-white:active { background: #48D1CC !important; box-shadow: 0 0 0 #008B8B !important; }
         
         .hidden { display: none !important; }
 
         #btnInGameMenu, #btnPause {
             position: absolute; top: 15px; padding: 8px 16px; font-size: 1rem; z-index: 8; 
-            border-color: #00e5ff !important; color: #fff !important;
-            background: rgba(255, 0, 127, 0.8) !important; box-shadow: 0 4px 0 #00e5ff !important;
+            border-color: #FFF !important; color: #FFF !important;
+            background: rgba(255, 99, 71, 0.85) !important; box-shadow: 0 4px 0 #CD5C5C !important;
         }
-        #btnInGameMenu:active, #btnPause:active { transform: translateY(4px); box-shadow: 0 0 0 #00e5ff !important; }
+        #btnInGameMenu:active, #btnPause:active { transform: translateY(4px); box-shadow: 0 0 0 #CD5C5C !important; }
         #btnInGameMenu { left: 15px; } #btnPause { right: 15px; }
         
-        /* Збільшені та яскраві статичні кнопки управління */
         .controls-container {
             position: absolute; bottom: 15px; left: 0; width: 100%;
             display: flex; padding: 0 4%; box-sizing: border-box; z-index: 5;
@@ -78,14 +85,15 @@
         
         .left-right-group { display: flex; gap: 20px; pointer-events: auto; }
 
+        /* Прозоро-білі кнопки управління */
         .touch-btn {
-            pointer-events: auto; width: 22vh; height: 22vh; /* Збільшено на 20% */
+            pointer-events: auto; width: 22vh; height: 22vh; 
             min-width: 95px; min-height: 95px; max-width: 150px; max-height: 150px;
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
             font-size: 5vh; font-weight: bold; user-select: none; 
-            background: rgba(0, 229, 255, 0.2); border: 4px solid #00e5ff; 
-            color: #fff; text-shadow: 2px 2px 0 #ff007f;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4) inset, 0 5px 15px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.25); border: 4px solid rgba(255, 255, 255, 0.6); 
+            color: #FFF; text-shadow: 2px 2px 0 #000;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2) inset, 0 5px 15px rgba(0,0,0,0.1);
             transition: background 0.1s;
         }
         
@@ -93,8 +101,8 @@
 
         #rotatePrompt {
             display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #2b0f4c; color: #00e5ff; z-index: 100; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center; text-shadow: 2px 2px 0 #ff007f;
+            background: #87CEEB; color: #FFF; z-index: 100; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; text-shadow: 2px 2px 0 #000;
         }
         @media (orientation: portrait) {
             #rotatePrompt { display: flex; } #gameContainer { display: none; }
@@ -102,16 +110,18 @@
 
         #roomCodeInput {
             padding: 12px; font-size: 1.5rem; text-align: center; text-transform: uppercase;
-            font-weight: 900; background: #fff; border: 4px solid #ff007f; color: #2b0f4c;
-            border-radius: 12px; font-family: inherit; outline: none; box-shadow: 0 0 15px #ff007f;
+            font-weight: 900; background: #FFF; border: 4px solid #FF6347; color: #333;
+            border-radius: 12px; font-family: inherit; outline: none; box-shadow: 0 0 15px rgba(0,0,0,0.2);
         }
 
         @media (max-height: 450px) {
-            h1 { font-size: 2.5rem; margin-bottom: 10px; }
+            h1 { font-size: 2.8rem; margin-bottom: 15px; }
             .menu-buttons { gap: 10px; }
-            button { padding: 10px 16px; font-size: 1rem; box-shadow: 0 4px 0 #00e5ff !important; }
+            button { padding: 10px 16px; font-size: 1rem; box-shadow: 0 4px 0 #CD5C5C !important; }
             button:active { transform: translateY(4px); }
-            .btn-white { box-shadow: 0 4px 0 #ffea00 !important; }
+            .btn-white { box-shadow: 0 4px 0 #008B8B !important; }
+            #winnerText { font-size: 2rem !important; margin: 5px 0; }
+            #finalScore { margin-bottom: 10px !important; }
         }
     </style>
 </head>
@@ -166,11 +176,10 @@
 
     <div id="gameOverScreen" class="overlay hidden">
         <h1 id="winnerText">WINNER!</h1>
-        <p id="finalScore" style="font-size: 1.5rem; margin-bottom: 25px; color: #ffea00; font-weight: bold; text-shadow: 2px 2px 0 #ff007f; text-align: center;"></p>
+        <p id="finalScore" style="font-size: 1.5rem; margin-bottom: 25px; color: #FFF; font-weight: bold; text-shadow: 2px 2px 0 #000; text-align: center;"></p>
         <button onclick="returnToMenu()">В Головне Меню</button>
     </div>
 
-    <!-- Статичні збільшені кнопки -->
     <div id="controlsP1" class="controls-container hidden">
         <div class="left-right-group">
             <div class="touch-btn" id="btnLeftP1">←</div>
@@ -220,47 +229,41 @@
         osc.start(startTime); osc.stop(startTime + duration);
     }
 
-    // Безперервний фоновий 8-бітний саундтрек
     function startContinuousBGM() {
         if (bgmStarted) return;
         initAudio();
         bgmStarted = true;
         
-        // Ретро 8-бітна мелодія
         const melody = [
-            392.00, 392.00, 587.33, 587.33, 659.25, 659.25, 587.33, 0, // G G D D E E D
-            523.25, 523.25, 493.88, 493.88, 440.00, 440.00, 392.00, 0, // C C B B A A G
-            587.33, 587.33, 523.25, 523.25, 493.88, 493.88, 440.00, 0, // D D C C B B A
-            587.33, 587.33, 523.25, 523.25, 493.88, 493.88, 440.00, 0  // D D C C B B A
+            392.00, 392.00, 587.33, 587.33, 659.25, 659.25, 587.33, 0,
+            523.25, 523.25, 493.88, 493.88, 440.00, 440.00, 392.00, 0,
+            587.33, 587.33, 523.25, 523.25, 493.88, 493.88, 440.00, 0,
+            587.33, 587.33, 523.25, 523.25, 493.88, 493.88, 440.00, 0 
         ];
         const bass = [
-            196.00, 196.00, 196.00, 196.00, // G
-            130.81, 130.81, 130.81, 130.81, // C
-            146.83, 146.83, 146.83, 146.83, // D
-            146.83, 146.83, 146.83, 146.83  // D
+            196.00, 196.00, 196.00, 196.00, 
+            130.81, 130.81, 130.81, 130.81, 
+            146.83, 146.83, 146.83, 146.83, 
+            146.83, 146.83, 146.83, 146.83  
         ];
 
         setInterval(() => {
             if(audioCtx && audioCtx.state === 'running') {
-                // Мелодія (Square wave - класика 8-біт)
                 let freq = melody[bgmStep % melody.length];
-                if (freq > 0) playNote(freq, 'square', audioCtx.currentTime, 0.15, 0.05);
+                if (freq > 0) playNote(freq, 'square', audioCtx.currentTime, 0.15, 0.04);
                 
-                // Бас-лінія 
                 if (bgmStep % 2 === 0) {
                     let bassFreq = bass[Math.floor((bgmStep % melody.length) / 8)];
-                    playNote(bassFreq, 'square', audioCtx.currentTime, 0.25, 0.07);
+                    playNote(bassFreq, 'square', audioCtx.currentTime, 0.25, 0.06);
                 }
                 bgmStep++;
             }
-        }, 180); // Темп музики
+        }, 180); 
     }
 
-    // Запуск музики при будь-якому дотику до екрана
     window.addEventListener('touchstart', startContinuousBGM, {once:true});
     window.addEventListener('mousedown', startContinuousBGM, {once:true});
 
-    // Ігрові звукові ефекти
     function playSound(type) {
         if (!audioCtx) return; const now = audioCtx.currentTime;
         if (type === 'jump') { playNote(300, 'square', now, 0.15, 0.1); playNote(450, 'square', now+0.05, 0.1, 0.05); } 
@@ -319,10 +322,10 @@
                 playSound(data.type); 
                 if (data.type === 'smash') { shakeFrames = 15; tg.HapticFeedback.impactOccurred('heavy'); } 
                 else { tg.HapticFeedback.impactOccurred('medium'); }
-                let p = data.pName === 'p1' ? p1 : p2; p.hitTimer = 5; spawnDust(ball.x, ball.y + ball.radius, data.type === 'smash' ? 15 : 5, '#ffea00'); 
+                let p = data.pName === 'p1' ? p1 : p2; p.hitTimer = 5; spawnDust(ball.x, ball.y + ball.radius, data.type === 'smash' ? 15 : 5, '#FFF'); 
             }
             if (data.type === 'wall') playSound('wall');
-            if (data.type === 'jump') { playSound('jump'); let p = data.pName === 'p1' ? p1 : p2; spawnDust(p.x, p.y + p.radius, 10, '#00e5ff'); }
+            if (data.type === 'jump') { playSound('jump'); let p = data.pName === 'p1' ? p1 : p2; spawnDust(p.x, p.y + p.radius, 10, '#DEB887'); }
         }
     });
 
@@ -339,7 +342,7 @@
             ctx.globalAlpha = 1.0;
         }
     }
-    function spawnDust(x, y, count=10, color='#fff') { for(let i=0; i<count; i++) particles.push(new Dust(x, y, color)); }
+    function spawnDust(x, y, count=10, color='#DEB887') { for(let i=0; i<count; i++) particles.push(new Dust(x, y, color)); }
 
     const GRAVITY = 0.6; const PTS_TO_WIN_SET = 7; const SETS_TO_WIN_MATCH = 3;
     let gameState = 'menu'; let difficulty = 'normal';
@@ -368,7 +371,7 @@
                 if (ball.vy > 0 && ball.y > 100 && ball.y < 340 && this.isGrounded && Math.abs(this.x - ball.x) < reactionDistance) {
                     if (this.jumpCooldown <= 0 && Math.random() <= jumpChance) { 
                         this.vy = this.jumpPower; this.isGrounded = false; 
-                        spawnDust(this.x, this.y + this.radius, 10, '#ff007f'); playSound('jump'); 
+                        spawnDust(this.x, this.y + this.radius, 10, '#DEB887'); playSound('jump'); 
                         this.jumpCooldown = 45; 
                     }
                 }
@@ -394,7 +397,7 @@
                 if (this.hitTimer > 0) { this.stretch = 0.8; this.squash = 1.2; this.hitTimer -= timeScale; }
                 
                 if (this.y + this.radius >= canvas.height) {
-                    if (!this.isGrounded && this.vy > 5) { spawnDust(this.x, canvas.height, 10, '#fff'); this.stretch = 0.8; this.squash = 1.2; }
+                    if (!this.isGrounded && this.vy > 5) { spawnDust(this.x, canvas.height, 10, '#DEB887'); this.stretch = 0.8; this.squash = 1.2; }
                     this.y = canvas.height - this.radius; this.vy = 0; this.isGrounded = true;
                 } else { this.isGrounded = false; }
                 
@@ -406,20 +409,35 @@
             }
         }
         draw() {
-            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.tilt); if (this.startX < 400) ctx.scale(-1, 1);
+            ctx.save(); 
+            ctx.translate(this.x, this.y); 
+            ctx.rotate(this.tilt); 
+            
+            // Якщо це Гравець 2 (справа), розвертаємо його обличчям вліво до сітки
+            if (this.startX > 400) {
+                ctx.scale(-1, 1);
+            }
+            
             ctx.scale(this.squash, this.stretch); 
             
-            // Яскравий неоновий персонаж
+            // Основне тіло
             ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2);
             ctx.fillStyle = this.color; ctx.fill();
-            ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.stroke();
+            ctx.lineWidth = 3; ctx.strokeStyle = '#222'; ctx.stroke();
+            
+            // Біле пузо (зміщене вперед до сітки)
+            ctx.beginPath(); ctx.arc(10, 10, this.radius * 0.65, 0, Math.PI*2);
+            ctx.fillStyle = '#FFF'; ctx.fill();
             
             // Око
-            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(15, -10, 10, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(20, -10, 4, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(14, -14, 9, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
+            ctx.beginPath(); ctx.arc(18, -14, 4, 0, Math.PI*2); ctx.fillStyle = '#000'; ctx.fill();
             
             // Дзьоб
-            ctx.fillStyle = '#ffea00'; ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(45, 5); ctx.lineTo(25, 10); ctx.fill();
+            ctx.fillStyle = '#FFD700'; ctx.beginPath(); 
+            ctx.moveTo(25, -4); ctx.lineTo(48, 2); ctx.lineTo(25, 8); 
+            ctx.fill(); ctx.stroke();
+            
             ctx.restore();
         }
     }
@@ -487,7 +505,7 @@
                 this.lastHitter = p; this.crossedNet = false; p.hitTimer = 5; 
                 
                 let hitType = isSmash ? 'smash' : 'hit';
-                playSound(hitType); spawnDust(this.x, this.y + this.radius, isSmash ? 20 : 5, '#ffea00');
+                playSound(hitType); spawnDust(this.x, this.y + this.radius, isSmash ? 20 : 5, '#FFF');
                 if (isSmash) { shakeFrames = 15; tg.HapticFeedback.impactOccurred('heavy'); } 
                 else { tg.HapticFeedback.impactOccurred('medium'); }
                 if (myRole === 'p1') socket.emit('gameEvent', { roomId, type: hitType, pName: p === p1 ? 'p1' : 'p2' });
@@ -498,22 +516,27 @@
             for(let i=0; i<this.trail.length; i++) {
                 let t = this.trail[i]; let ratio = (i + 1) / this.trail.length;
                 ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2); 
-                ctx.fillStyle = `rgba(255, 234, 0, ${0.5 * ratio})`; ctx.fill();
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.5 * ratio})`; ctx.fill();
             }
             ctx.save(); ctx.translate(this.x, this.y); this.rotation += this.vx * 0.05; ctx.rotate(this.rotation);
             ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); 
-            ctx.fillStyle = '#ffea00'; ctx.shadowBlur = 30; ctx.shadowColor = '#ffea00'; 
-            ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+            ctx.fillStyle = '#FFF'; ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.3)'; 
+            ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#333'; ctx.stroke();
             
-            // Візерунок м'яча
-            ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 2;
+            // Волейбольні лінії
+            ctx.shadowBlur = 0; ctx.strokeStyle = '#CD5C5C'; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.moveTo(-15, -10); ctx.lineTo(15, 10); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(-15, 10); ctx.lineTo(15, -10); ctx.stroke();
+            ctx.strokeStyle = '#20B2AA';
+            ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI, false); ctx.stroke();
             ctx.restore();
         }
     }
 
-    let p1 = new Player(150, '#ff007f'); let p2 = new Player(650, '#00e5ff', true); let ball = new Ball();
+    // Гравець 1 (Червоно-білий), Гравець 2 (Синьо-білий)
+    let p1 = new Player(150, '#FF4500'); 
+    let p2 = new Player(650, '#1E90FF', true); 
+    let ball = new Ball();
     const keys = { a: false, d: false, w: false };
 
     window.addEventListener('keydown', (e) => {
@@ -523,7 +546,7 @@
         if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') { 
             keys.w = true; 
             if (pRef.isGrounded && gameState === 'playing') {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#00e5ff'); playSound('jump');
+                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#DEB887'); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
         }
@@ -542,12 +565,12 @@
             e.preventDefault(); if(gameState !== 'playing') return;
             keys[key] = true; let pRef = (myRole === 'p2') ? p2 : p1;
             if(key==='w' && pRef.isGrounded) {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#00e5ff'); playSound('jump');
+                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#DEB887'); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
-            btn.style.background = 'rgba(0, 229, 255, 0.6)';
+            btn.style.background = 'rgba(255, 255, 255, 0.6)';
         };
-        const endAction = (e) => { e.preventDefault(); keys[key] = false; btn.style.background = 'rgba(0, 229, 255, 0.2)'; };
+        const endAction = (e) => { e.preventDefault(); keys[key] = false; btn.style.background = 'rgba(255, 255, 255, 0.25)'; };
         
         btn.addEventListener('touchstart', startAction, {passive: false});
         btn.addEventListener('touchend', endAction, {passive: false});
@@ -556,7 +579,6 @@
 
     addTouch('btnLeftP1', 'a'); addTouch('btnRightP1', 'd'); addTouch('btnJumpP1', 'w');
 
-    // Логіка меню
     function showDifficulty() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('diffMenuBtns').classList.remove('hidden'); }
     function hideDifficulty() { document.getElementById('mainMenuBtns').classList.remove('hidden'); document.getElementById('diffMenuBtns').classList.add('hidden'); }
     function showOnlineMenu() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('onlineMenuBtns').classList.remove('hidden'); }
@@ -573,7 +595,7 @@
     function createRoom() {
         initAudio(); myRole = null; roomId = generateRoomCode(); socket.emit('joinRoom', roomId);
         document.getElementById('menuScreen').classList.add('hidden');
-        document.getElementById('winnerText').innerHTML = `КОД КІМНАТИ:<br><span style="color:#00e5ff">${roomId}</span><br><br><span style="font-size:1.2rem; color:#fff;">ОЧІКУВАННЯ СУПЕРНИКА...</span>`;
+        document.getElementById('winnerText').innerHTML = `КОД КІМНАТИ:<br><span style="color:#FFD700">${roomId}</span><br><br><span style="font-size:1.2rem; color:#FFF;">ОЧІКУВАННЯ СУПЕРНИКА...</span>`;
         document.getElementById('finalScore').innerText = ""; document.getElementById('gameOverScreen').classList.remove('hidden');
     }
 
@@ -618,17 +640,26 @@
     }
 
     function drawScore() {
-        ctx.font = '900 50px Courier New'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; 
-        ctx.shadowBlur = 10; ctx.shadowColor = '#00e5ff';
+        ctx.font = '900 50px Courier New'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center'; 
+        ctx.shadowBlur = 5; ctx.shadowColor = '#000';
         ctx.fillText(`${score.p1} - ${score.p2}`, canvas.width / 2, 70);
-        ctx.font = 'bold 20px Courier New'; ctx.fillStyle = '#ffea00'; 
+        ctx.font = 'bold 20px Courier New'; ctx.fillStyle = '#FFF'; 
         ctx.fillText(`СЕТИ: ${sets.p1} - ${sets.p2}`, canvas.width / 2, 30);
         ctx.shadowBlur = 0;
     }
     
     function drawNet() {
-        ctx.fillStyle = '#00e5ff'; ctx.shadowBlur = 20; ctx.shadowColor = '#00e5ff'; ctx.fillRect(net.x, net.y, net.width, net.height);
-        ctx.beginPath(); ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2); ctx.fill(); ctx.closePath(); ctx.shadowBlur = 0;
+        ctx.fillStyle = '#E2E8F0'; ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.5)'; 
+        ctx.fillRect(net.x, net.y, net.width, net.height);
+        
+        // Малюємо текстуру сітки
+        ctx.shadowBlur = 0; ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1;
+        for(let i=0; i<net.height; i+=15) {
+            ctx.beginPath(); ctx.moveTo(net.x, net.y + i); ctx.lineTo(net.x + net.width, net.y + i); ctx.stroke();
+        }
+        
+        ctx.beginPath(); ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2); 
+        ctx.fillStyle = '#FF4500'; ctx.fill(); 
     }
 
     function gameLoop(timestamp) {
