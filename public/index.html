@@ -9,16 +9,23 @@
     
     <style>
         body {
-            margin: 0; padding: 0; background-color: #87CEEB; color: #fff;
+            margin: 0; padding: 0; background-color: #1F1B38; color: #fff;
             font-family: 'Courier New', Courier, monospace; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
             height: var(--tg-viewport-stable-height, 100vh); 
             width: 100vw; touch-action: none; user-select: none; -webkit-user-select: none;
         }
         
+        /* Пастельний неоновий градієнт (Vaporwave) */
         #gameContainer {
             position: relative; width: 100vw; height: 100%;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #1E90FF 50%, #00BFFF 85%, #F4A460 85%, #FFDEAD 100%);
+            background: linear-gradient(to bottom, 
+                #1A162B 0%,     /* Глибокий фіолетовий */
+                #3A2859 40%,    /* М'який бузковий */
+                #7C4D7A 70%,    /* Пастельно-пурпуровий */
+                #C47A95 100%    /* Ніжно-рожевий */
+            );
+            box-shadow: 0 0 40px rgba(196, 122, 149, 0.4) inset;
             overflow: hidden;
         }
         
@@ -27,47 +34,50 @@
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(0, 50, 100, 0.7); z-index: 10;
+            background: rgba(26, 22, 43, 0.8); z-index: 10;
         }
         
         h1 {
-            color: #FFD700; text-shadow: 3px 3px 0 #FF4500, 0 0 15px #FFD700;
-            font-size: 4rem; margin-bottom: 25px; text-align: center; font-weight: 900;
+            color: #B7FFEA; text-shadow: 3px 3px 0 #FFB8D0, 0 0 20px rgba(183, 255, 234, 0.6);
+            font-size: 3.8rem; margin-bottom: 25px; text-align: center; font-weight: 900;
         }
         
         .menu-buttons {
             display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 400px;
         }
 
+        /* Ніжні неонові кнопки */
         button {
             appearance: none; -webkit-appearance: none;
-            background: #FF6347 !important; border: 3px solid #FFF !important;
-            color: #FFF !important; padding: 14px 20px; font-size: 1.2rem; font-weight: bold;
+            background: rgba(255, 184, 208, 0.8) !important; border: 3px solid #B7FFEA !important;
+            color: #1A162B !important; padding: 14px 20px; font-size: 1.2rem; font-weight: bold;
             font-family: inherit; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 6px 0 #CD5C5C, 0 0 10px rgba(0,0,0,0.3) !important; 
-            transition: 0.1s; border-radius: 12px; text-shadow: 1px 1px 0 #000;
+            box-shadow: 0 6px 0 #8BE9FD, 0 0 15px rgba(255, 184, 208, 0.5) !important; 
+            transition: 0.1s; border-radius: 12px;
         }
         button:active { 
-            transform: translateY(6px); box-shadow: 0 0 0 #CD5C5C, 0 0 5px rgba(0,0,0,0.3) !important; 
-            background: #E9967A !important; 
+            transform: translateY(6px); box-shadow: 0 0 0 #8BE9FD, 0 0 5px rgba(255, 184, 208, 0.5) !important; 
+            background: rgba(255, 184, 208, 1) !important; 
         }
         
         .btn-white { 
-            background: #20B2AA !important; border-color: #FFF !important; color: #FFF !important; 
-            box-shadow: 0 6px 0 #008B8B !important; text-shadow: 1px 1px 0 #000;
+            background: rgba(183, 255, 234, 0.8) !important; border-color: #FDFFB6 !important; color: #1A162B !important; 
+            box-shadow: 0 6px 0 #F1FA8C !important;
         }
-        .btn-white:active { background: #48D1CC !important; box-shadow: 0 0 0 #008B8B !important; }
+        .btn-white:active { background: rgba(183, 255, 234, 1) !important; box-shadow: 0 0 0 #F1FA8C !important; }
         
         .hidden { display: none !important; }
 
         #btnInGameMenu, #btnPause {
             position: absolute; top: 15px; padding: 8px 16px; font-size: 1rem; z-index: 8; 
-            border-color: #FFF !important; color: #FFF !important;
-            background: rgba(255, 99, 71, 0.85) !important; box-shadow: 0 4px 0 #CD5C5C !important;
+            border-color: #B7FFEA !important; color: #fff !important;
+            background: rgba(255, 184, 208, 0.4) !important; box-shadow: 0 4px 0 #8BE9FD !important;
+            text-shadow: 1px 1px 0 #1A162B;
         }
-        #btnInGameMenu:active, #btnPause:active { transform: translateY(4px); box-shadow: 0 0 0 #CD5C5C !important; }
+        #btnInGameMenu:active, #btnPause:active { transform: translateY(4px); box-shadow: 0 0 0 #8BE9FD !important; }
         #btnInGameMenu { left: 15px; } #btnPause { right: 15px; }
         
+        /* Статичні кнопки управління */
         .controls-container {
             position: absolute; bottom: 15px; left: 0; width: 100%;
             display: flex; padding: 0 4%; box-sizing: border-box; z-index: 5;
@@ -81,9 +91,9 @@
             min-width: 95px; min-height: 95px; max-width: 150px; max-height: 150px;
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
             font-size: 5vh; font-weight: bold; user-select: none; 
-            background: rgba(255, 255, 255, 0.25); border: 4px solid rgba(255, 255, 255, 0.6); 
-            color: #FFF; text-shadow: 2px 2px 0 #000;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2) inset, 0 5px 15px rgba(0,0,0,0.1);
+            background: rgba(183, 255, 234, 0.15); border: 3px solid rgba(183, 255, 234, 0.5); 
+            color: #FFF; text-shadow: 2px 2px 0 rgba(255, 184, 208, 0.8);
+            box-shadow: 0 0 15px rgba(183, 255, 234, 0.2) inset, 0 5px 15px rgba(0,0,0,0.2);
             transition: background 0.1s;
         }
         
@@ -91,8 +101,8 @@
 
         #rotatePrompt {
             display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #87CEEB; color: #FFF; z-index: 100; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center; text-shadow: 2px 2px 0 #000;
+            background: #1F1B38; color: #B7FFEA; z-index: 100; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; text-shadow: 2px 2px 0 #FFB8D0;
         }
         @media (orientation: portrait) {
             #rotatePrompt { display: flex; } #gameContainer { display: none; }
@@ -100,16 +110,16 @@
 
         #roomCodeInput {
             padding: 12px; font-size: 1.5rem; text-align: center; text-transform: uppercase;
-            font-weight: 900; background: #FFF; border: 4px solid #FF6347; color: #333;
-            border-radius: 12px; font-family: inherit; outline: none; box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            font-weight: 900; background: #FFF; border: 4px solid #FFB8D0; color: #1A162B;
+            border-radius: 12px; font-family: inherit; outline: none; box-shadow: 0 0 15px rgba(255, 184, 208, 0.5);
         }
 
         @media (max-height: 450px) {
             h1 { font-size: 2.8rem; margin-bottom: 15px; }
             .menu-buttons { gap: 10px; }
-            button { padding: 10px 16px; font-size: 1rem; box-shadow: 0 4px 0 #CD5C5C !important; }
+            button { padding: 10px 16px; font-size: 1rem; box-shadow: 0 4px 0 #8BE9FD !important; }
             button:active { transform: translateY(4px); }
-            .btn-white { box-shadow: 0 4px 0 #008B8B !important; }
+            .btn-white { box-shadow: 0 4px 0 #F1FA8C !important; }
             #winnerText { font-size: 2rem !important; margin: 5px 0; }
             #finalScore { margin-bottom: 10px !important; }
         }
@@ -166,7 +176,7 @@
 
     <div id="gameOverScreen" class="overlay hidden">
         <h1 id="winnerText">WINNER!</h1>
-        <p id="finalScore" style="font-size: 1.5rem; margin-bottom: 25px; color: #FFF; font-weight: bold; text-shadow: 2px 2px 0 #000; text-align: center;"></p>
+        <p id="finalScore" style="font-size: 1.5rem; margin-bottom: 25px; color: #FDFFB6; font-weight: bold; text-shadow: 2px 2px 0 #FFB8D0; text-align: center;"></p>
         <button onclick="returnToMenu()">В Головне Меню</button>
     </div>
 
@@ -195,13 +205,12 @@
 
     let shakeFrames = 0;
     let lastTime = 0; 
-    let scoreScale = 1.0; // Для анімації збільшення рахунку
+    let scoreScale = 1.0; 
 
-    // --- Анімація тексту (ГОЛ, СЕТ) ---
     let notification = { text: "", alpha: 0, scale: 1, color: "#FFF" };
     function showNotification(text, color) {
         notification.text = text;
-        notification.alpha = 1.2; // Трохи більше 1, щоб текст довше висів
+        notification.alpha = 1.2; 
         notification.scale = 0.5;
         notification.color = color;
     }
@@ -279,27 +288,24 @@
             playNote(250, 'triangle', now, 0.1, 0.1); 
         } 
         else if (type === 'score') { 
-            // 8-бітний звук монетки/очка
             playNote(987.77, 'square', now, 0.1, 0.15); 
             playNote(1318.51, 'square', now+0.1, 0.3, 0.15); 
             tg.HapticFeedback.notificationOccurred('success'); 
         } 
         else if (type === 'set_win') { 
-            // 8-бітний переможний джингл (швидка мелодія)
-            playNote(523.25, 'square', now, 0.1, 0.15);      // C5
-            playNote(659.25, 'square', now + 0.1, 0.1, 0.15); // E5
-            playNote(783.99, 'square', now + 0.2, 0.1, 0.15); // G5
-            playNote(1046.50, 'square', now + 0.3, 0.4, 0.15); // C6
+            playNote(523.25, 'square', now, 0.1, 0.15);      
+            playNote(659.25, 'square', now + 0.1, 0.1, 0.15); 
+            playNote(783.99, 'square', now + 0.2, 0.1, 0.15); 
+            playNote(1046.50, 'square', now + 0.3, 0.4, 0.15); 
             tg.HapticFeedback.notificationOccurred('success'); 
         } 
         else if (type === 'match_win') { 
-            // Епічна 8-бітна фанфара для фіналу партії
-            playNote(523.25, 'square', now, 0.15, 0.15);       // C5
-            playNote(523.25, 'square', now + 0.15, 0.15, 0.15); // C5
-            playNote(523.25, 'square', now + 0.30, 0.15, 0.15); // C5
-            playNote(783.99, 'square', now + 0.45, 0.4, 0.15);  // G5
-            playNote(659.25, 'square', now + 0.85, 0.2, 0.15);  // E5
-            playNote(1046.50, 'square', now + 1.05, 0.6, 0.15); // C6
+            playNote(523.25, 'square', now, 0.15, 0.15);       
+            playNote(523.25, 'square', now + 0.15, 0.15, 0.15); 
+            playNote(523.25, 'square', now + 0.30, 0.15, 0.15); 
+            playNote(783.99, 'square', now + 0.45, 0.4, 0.15);  
+            playNote(659.25, 'square', now + 0.85, 0.2, 0.15);  
+            playNote(1046.50, 'square', now + 1.05, 0.6, 0.15); 
             tg.HapticFeedback.notificationOccurred('success'); 
         } 
         else if (type === 'whistle') {
@@ -342,12 +348,11 @@
             if (data.sound) playSound(data.sound);
             if (data.shake) shakeFrames = data.shake;
             
-            // Якщо був гол/перемога — запускаємо анімацію тексту
             if (!data.isGameOver && data.pointWinner) {
-                scoreScale = 1.5; // Підстрибування рахунку
+                scoreScale = 1.5; 
                 let notifText = data.isSetWin ? "СЕТ ЗАКІНЧЕНО!" : "ГОЛ!";
-                let notifColor = (data.pointWinner === 'p1') ? "#FF4500" : "#1E90FF";
-                if (data.isSetWin) notifColor = "#FFD700";
+                let notifColor = (data.pointWinner === 'p1') ? "#FFB8D0" : "#8BE9FD";
+                if (data.isSetWin) notifColor = "#FDFFB6";
                 showNotification(notifText, notifColor);
             }
             
@@ -364,7 +369,7 @@
                 let p = data.pName === 'p1' ? p1 : p2; p.hitTimer = 5; spawnDust(ball.x, ball.y + ball.radius, data.type === 'smash' ? 15 : 5, '#FFF'); 
             }
             if (data.type === 'wall') playSound('wall');
-            if (data.type === 'jump') { playSound('jump'); let p = data.pName === 'p1' ? p1 : p2; spawnDust(p.x, p.y + p.radius, 10, '#DEB887'); }
+            if (data.type === 'jump') { playSound('jump'); let p = data.pName === 'p1' ? p1 : p2; spawnDust(p.x, p.y + p.radius, 10, p.color); }
         }
     });
 
@@ -381,7 +386,7 @@
             ctx.globalAlpha = 1.0;
         }
     }
-    function spawnDust(x, y, count=10, color='#DEB887') { for(let i=0; i<count; i++) particles.push(new Dust(x, y, color)); }
+    function spawnDust(x, y, count=10, color='#FFF') { for(let i=0; i<count; i++) particles.push(new Dust(x, y, color)); }
 
     const GRAVITY = 0.6; const PTS_TO_WIN_SET = 7; const SETS_TO_WIN_MATCH = 3;
     let gameState = 'menu'; let difficulty = 'normal';
@@ -410,7 +415,7 @@
                 if (ball.vy > 0 && ball.y > 100 && ball.y < 340 && this.isGrounded && Math.abs(this.x - ball.x) < reactionDistance) {
                     if (this.jumpCooldown <= 0 && Math.random() <= jumpChance) { 
                         this.vy = this.jumpPower; this.isGrounded = false; 
-                        spawnDust(this.x, this.y + this.radius, 10, '#DEB887'); playSound('jump'); 
+                        spawnDust(this.x, this.y + this.radius, 10, this.color); playSound('jump'); 
                         this.jumpCooldown = 45; 
                     }
                 }
@@ -436,7 +441,7 @@
                 if (this.hitTimer > 0) { this.stretch = 0.8; this.squash = 1.2; this.hitTimer -= timeScale; }
                 
                 if (this.y + this.radius >= canvas.height) {
-                    if (!this.isGrounded && this.vy > 5) { spawnDust(this.x, canvas.height, 10, '#DEB887'); this.stretch = 0.8; this.squash = 1.2; }
+                    if (!this.isGrounded && this.vy > 5) { spawnDust(this.x, canvas.height, 10, this.color); this.stretch = 0.8; this.squash = 1.2; }
                     this.y = canvas.height - this.radius; this.vy = 0; this.isGrounded = true;
                 } else { this.isGrounded = false; }
                 
@@ -452,28 +457,30 @@
             ctx.translate(this.x, this.y); 
             ctx.rotate(this.tilt); 
             
-            // Якщо це Гравець 2 (справа), розвертаємо його обличчям вліво
             if (this.startX > 400) { ctx.scale(-1, 1); }
             
             ctx.scale(this.squash, this.stretch); 
             
-            // Основне тіло
+            // Ніжне неонове тіло
             ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2);
-            ctx.fillStyle = this.color; ctx.fill();
-            ctx.lineWidth = 3; ctx.strokeStyle = '#222'; ctx.stroke();
+            ctx.fillStyle = this.color; 
+            ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.lineWidth = 3; ctx.strokeStyle = '#FFF'; ctx.stroke();
             
-            // Біле пузо (зміщене вперед до сітки)
+            // Біле пузо
             ctx.beginPath(); ctx.arc(10, 10, this.radius * 0.65, 0, Math.PI*2);
-            ctx.fillStyle = '#FFF'; ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
             
             // Око
             ctx.beginPath(); ctx.arc(14, -14, 9, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
-            ctx.beginPath(); ctx.arc(18, -14, 4, 0, Math.PI*2); ctx.fillStyle = '#000'; ctx.fill();
+            ctx.beginPath(); ctx.arc(18, -14, 4, 0, Math.PI*2); ctx.fillStyle = '#1A162B'; ctx.fill();
             
             // Дзьоб
-            ctx.fillStyle = '#FFD700'; ctx.beginPath(); 
+            ctx.fillStyle = '#FDFFB6'; ctx.beginPath(); 
             ctx.moveTo(25, -4); ctx.lineTo(48, 2); ctx.lineTo(25, 8); 
-            ctx.fill(); ctx.stroke();
+            ctx.fill(); ctx.strokeStyle = '#1A162B'; ctx.lineWidth = 1; ctx.stroke();
             
             ctx.restore();
         }
@@ -508,10 +515,9 @@
                     else { this.vx *= -1; this.x = this.x < net.x ? net.x - this.radius : net.x + net.width + this.radius; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
                 }
                 
-                // ГОЛ! М'яч падає на підлогу
                 if (this.y + this.radius >= canvas.height) {
                     shakeFrames = 10;
-                    scoreScale = 1.5; // Анімація підстрибування цифр рахунку
+                    scoreScale = 1.5; 
                     
                     let sndToPlay = 'score'; let isGameOver = false; let winner = ''; let nextServer = 1;
                     let pointWinner = '';
@@ -535,11 +541,10 @@
                     this.reset(nextServer);
                     p1.x = p1.startX; p1.y = 350; p1.radius = p1.baseRadius; p2.x = p2.startX; p2.y = 350; p2.radius = p2.baseRadius;
                     
-                    // Запуск анімації тексту локально (для хоста або PvE)
                     if (!isGameOver) {
                         let notifText = isSetWin ? "СЕТ ЗАКІНЧЕНО!" : "ГОЛ!";
-                        let notifColor = (pointWinner === 'p1') ? "#FF4500" : "#1E90FF";
-                        if (isSetWin) notifColor = "#FFD700";
+                        let notifColor = (pointWinner === 'p1') ? "#FFB8D0" : "#8BE9FD";
+                        if (isSetWin) notifColor = "#FDFFB6";
                         showNotification(notifText, notifColor);
                     }
 
@@ -569,7 +574,7 @@
                 this.lastHitter = p; this.crossedNet = false; p.hitTimer = 5; 
                 
                 let hitType = isSmash ? 'smash' : 'hit';
-                playSound(hitType); spawnDust(this.x, this.y + this.radius, isSmash ? 20 : 5, '#FFF');
+                playSound(hitType); spawnDust(this.x, this.y + this.radius, isSmash ? 20 : 5, '#FDFFB6');
                 if (isSmash) { shakeFrames = 15; tg.HapticFeedback.impactOccurred('heavy'); } 
                 else { tg.HapticFeedback.impactOccurred('medium'); }
                 if (myRole === 'p1') socket.emit('gameEvent', { roomId, type: hitType, pName: p === p1 ? 'p1' : 'p2' });
@@ -580,25 +585,23 @@
             for(let i=0; i<this.trail.length; i++) {
                 let t = this.trail[i]; let ratio = (i + 1) / this.trail.length;
                 ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2); 
-                ctx.fillStyle = `rgba(255, 255, 255, ${0.5 * ratio})`; ctx.fill();
+                ctx.fillStyle = `rgba(253, 255, 182, ${0.4 * ratio})`; ctx.fill();
             }
             ctx.save(); ctx.translate(this.x, this.y); this.rotation += this.vx * 0.05; ctx.rotate(this.rotation);
             ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); 
-            ctx.fillStyle = '#FFF'; ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.3)'; 
-            ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#333'; ctx.stroke();
+            ctx.fillStyle = '#FDFFB6'; ctx.shadowBlur = 15; ctx.shadowColor = '#FDFFB6'; 
+            ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#FFF'; ctx.stroke();
             
-            // Волейбольні лінії
-            ctx.shadowBlur = 0; ctx.strokeStyle = '#CD5C5C'; ctx.lineWidth = 3;
+            ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(26, 22, 43, 0.3)'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(-15, -10); ctx.lineTo(15, 10); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(-15, 10); ctx.lineTo(15, -10); ctx.stroke();
-            ctx.strokeStyle = '#20B2AA';
-            ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI, false); ctx.stroke();
             ctx.restore();
         }
     }
 
-    let p1 = new Player(150, '#FF4500'); 
-    let p2 = new Player(650, '#1E90FF', true); 
+    // Гравець 1 (Пастельно-рожевий), Гравець 2 (Пастельно-блакитний)
+    let p1 = new Player(150, '#FFB8D0'); 
+    let p2 = new Player(650, '#8BE9FD', true); 
     let ball = new Ball();
     const keys = { a: false, d: false, w: false };
 
@@ -609,7 +612,7 @@
         if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') { 
             keys.w = true; 
             if (pRef.isGrounded && gameState === 'playing') {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#DEB887'); playSound('jump');
+                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, pRef.color); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
         }
@@ -627,12 +630,12 @@
             e.preventDefault(); if(gameState !== 'playing') return;
             keys[key] = true; let pRef = (myRole === 'p2') ? p2 : p1;
             if(key==='w' && pRef.isGrounded) {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#DEB887'); playSound('jump');
+                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, pRef.color); playSound('jump');
                 if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
             }
-            btn.style.background = 'rgba(255, 255, 255, 0.6)';
+            btn.style.background = 'rgba(183, 255, 234, 0.4)';
         };
-        const endAction = (e) => { e.preventDefault(); keys[key] = false; btn.style.background = 'rgba(255, 255, 255, 0.25)'; };
+        const endAction = (e) => { e.preventDefault(); keys[key] = false; btn.style.background = 'rgba(183, 255, 234, 0.15)'; };
         
         btn.addEventListener('touchstart', startAction, {passive: false});
         btn.addEventListener('touchend', endAction, {passive: false});
@@ -657,7 +660,7 @@
     function createRoom() {
         initAudio(); myRole = null; roomId = generateRoomCode(); socket.emit('joinRoom', roomId);
         document.getElementById('menuScreen').classList.add('hidden');
-        document.getElementById('winnerText').innerHTML = `КОД КІМНАТИ:<br><span style="color:#FFD700">${roomId}</span><br><br><span style="font-size:1.2rem; color:#FFF;">ОЧІКУВАННЯ СУПЕРНИКА...</span>`;
+        document.getElementById('winnerText').innerHTML = `КОД КІМНАТИ:<br><span style="color:#B7FFEA">${roomId}</span><br><br><span style="font-size:1.2rem; color:#FFF;">ОЧІКУВАННЯ СУПЕРНИКА...</span>`;
         document.getElementById('finalScore').innerText = ""; document.getElementById('gameOverScreen').classList.remove('hidden');
     }
 
@@ -707,28 +710,23 @@
         ctx.scale(scoreScale, scoreScale);
         
         ctx.font = '900 50px Courier New'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center'; 
-        ctx.shadowBlur = 5; ctx.shadowColor = '#000';
+        ctx.shadowBlur = 10; ctx.shadowColor = '#B7FFEA';
         ctx.fillText(`${score.p1} - ${score.p2}`, 0, 0);
         ctx.restore();
         
         ctx.save();
-        ctx.font = 'bold 20px Courier New'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center'; 
-        ctx.shadowBlur = 5; ctx.shadowColor = '#000';
+        ctx.font = 'bold 20px Courier New'; ctx.fillStyle = '#FFB8D0'; ctx.textAlign = 'center'; 
+        ctx.shadowBlur = 5; ctx.shadowColor = '#1A162B';
         ctx.fillText(`СЕТИ: ${sets.p1} - ${sets.p2}`, canvas.width / 2, 30);
         ctx.restore();
     }
     
     function drawNet() {
-        ctx.fillStyle = '#E2E8F0'; ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.5)'; 
+        ctx.fillStyle = '#8BE9FD'; ctx.shadowBlur = 15; ctx.shadowColor = '#8BE9FD'; 
         ctx.fillRect(net.x, net.y, net.width, net.height);
         
-        ctx.shadowBlur = 0; ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1;
-        for(let i=0; i<net.height; i+=15) {
-            ctx.beginPath(); ctx.moveTo(net.x, net.y + i); ctx.lineTo(net.x + net.width, net.y + i); ctx.stroke();
-        }
-        
         ctx.beginPath(); ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2); 
-        ctx.fillStyle = '#FF4500'; ctx.fill(); 
+        ctx.fillStyle = '#FFF'; ctx.fill(); ctx.shadowBlur = 0;
     }
 
     function gameLoop(timestamp) {
@@ -740,7 +738,6 @@
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Зменшення скейлу рахунку (ефект підстрибування)
         if (scoreScale > 1.0) {
             scoreScale -= 0.02 * timeScale;
         } else {
@@ -768,27 +765,25 @@
             particles.forEach(p => p.draw()); drawNet(); p1.draw(); p2.draw(); ball.draw(); drawScore(); 
             ctx.restore();
             
-            // Відмальовка анімації сповіщення (ГОЛ / СЕТ)
             if (notification.alpha > 0) {
                 ctx.save();
                 ctx.translate(canvas.width / 2, canvas.height / 2 - 40);
-                notification.scale += (1.5 - notification.scale) * 0.1 * timeScale; // Плавне збільшення
+                notification.scale += (1.5 - notification.scale) * 0.1 * timeScale; 
                 ctx.scale(notification.scale, notification.scale);
                 ctx.font = '900 45px Courier New'; 
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 
-                // Прозорість
                 let drawAlpha = Math.min(1.0, notification.alpha);
                 
                 ctx.fillStyle = notification.color;
                 ctx.globalAlpha = drawAlpha;
-                ctx.shadowBlur = 10; ctx.shadowColor = '#000';
+                ctx.shadowBlur = 15; ctx.shadowColor = notification.color;
                 
                 ctx.fillText(notification.text, 0, 0);
-                ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.strokeText(notification.text, 0, 0);
+                ctx.lineWidth = 2; ctx.strokeStyle = '#1A162B'; ctx.strokeText(notification.text, 0, 0);
                 
                 ctx.restore();
-                notification.alpha -= 0.015 * timeScale; // Плавне затухання
+                notification.alpha -= 0.015 * timeScale; 
             }
         }
         
