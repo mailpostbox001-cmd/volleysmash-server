@@ -1,800 +1,1133 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VolleySmash - Telegram Mini App</title>
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <style>
-        body {
-            margin: 0; padding: 0; background-color: #87CEEB; color: #fff;
-            font-family: 'Courier New', Courier, monospace; overflow: hidden;
-            display: flex; justify-content: center; align-items: center;
-            height: var(--tg-viewport-stable-height, 100vh); 
-            width: 100vw; touch-action: none; user-select: none; -webkit-user-select: none;
-        }
-        
-        #gameContainer {
-            position: relative; width: 100vw; height: 100%;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #1E90FF 50%, #00BFFF 85%, #F4A460 85%, #FFDEAD 100%);
-            overflow: hidden;
-        }
-        
-        canvas { display: block; width: 100%; height: 100%; object-fit: fill; }
-        
-        .overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(0, 50, 100, 0.7); z-index: 10;
-        }
-        
-        h1 {
-            color: #FFD700; text-shadow: 3px 3px 0 #FF4500, 0 0 15px #FFD700;
-            font-size: 4rem; margin-bottom: 25px; text-align: center; font-weight: 900;
-        }
-        
-        .menu-buttons {
-            display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 400px;
-        }
-
-        button {
-            appearance: none; -webkit-appearance: none;
-            background: #FF6347 !important; border: 3px solid #FFF !important;
-            color: #FFF !important; padding: 14px 20px; font-size: 1.2rem; font-weight: bold;
-            font-family: inherit; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 6px 0 #CD5C5C, 0 0 10px rgba(0,0,0,0.3) !important; 
-            transition: 0.1s; border-radius: 12px; text-shadow: 1px 1px 0 #000;
-        }
-        button:active { 
-            transform: translateY(6px); box-shadow: 0 0 0 #CD5C5C, 0 0 5px rgba(0,0,0,0.3) !important; 
-            background: #E9967A !important; 
-        }
-        
-        .btn-white { 
-            background: #20B2AA !important; border-color: #FFF !important; color: #FFF !important; 
-            box-shadow: 0 6px 0 #008B8B !important; text-shadow: 1px 1px 0 #000;
-        }
-        .btn-white:active { background: #48D1CC !important; box-shadow: 0 0 0 #008B8B !important; }
-        
-        .hidden { display: none !important; }
-
-        #btnInGameMenu, #btnPause {
-            position: absolute; top: 15px; padding: 8px 16px; font-size: 1rem; z-index: 8; 
-            border-color: #FFF !important; color: #FFF !important;
-            background: rgba(255, 99, 71, 0.85) !important; box-shadow: 0 4px 0 #CD5C5C !important;
-        }
-        #btnInGameMenu:active, #btnPause:active { transform: translateY(4px); box-shadow: 0 0 0 #CD5C5C !important; }
-        #btnInGameMenu { left: 15px; } #btnPause { right: 15px; }
-        
-        .controls-container {
-            position: absolute; bottom: 15px; left: 0; width: 100%;
-            display: flex; padding: 0 4%; box-sizing: border-box; z-index: 5;
-            justify-content: space-between; pointer-events: none;
-        }
-        
-        .left-right-group { display: flex; gap: 20px; pointer-events: auto; }
-
-        .touch-btn {
-            pointer-events: auto; width: 22vh; height: 22vh; 
-            min-width: 95px; min-height: 95px; max-width: 150px; max-height: 150px;
-            border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            font-size: 5vh; font-weight: bold; user-select: none; 
-            background: rgba(255, 255, 255, 0.25); border: 4px solid rgba(255, 255, 255, 0.6); 
-            color: #FFF; text-shadow: 2px 2px 0 #000;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2) inset, 0 5px 15px rgba(0,0,0,0.1);
-            transition: background 0.1s;
-        }
-        
-        #btnJumpP1 { pointer-events: auto; }
-
-        #rotatePrompt {
-            display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #87CEEB; color: #FFF; z-index: 100; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center; text-shadow: 2px 2px 0 #000;
-        }
-        @media (orientation: portrait) {
-            #rotatePrompt { display: flex; } #gameContainer { display: none; }
-        }
-
-        #roomCodeInput {
-            padding: 12px; font-size: 1.5rem; text-align: center; text-transform: uppercase;
-            font-weight: 900; background: #FFF; border: 4px solid #FF6347; color: #333;
-            border-radius: 12px; font-family: inherit; outline: none; box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        }
-
-        @media (max-height: 450px) {
-            h1 { font-size: 2.8rem; margin-bottom: 15px; }
-            .menu-buttons { gap: 10px; }
-            button { padding: 10px 16px; font-size: 1rem; box-shadow: 0 4px 0 #CD5C5C !important; }
-            button:active { transform: translateY(4px); }
-            .btn-white { box-shadow: 0 4px 0 #008B8B !important; }
-            #winnerText { font-size: 2rem !important; margin: 5px 0; }
-            #finalScore { margin-bottom: 10px !important; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Jelly Volley - Telegram Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <style>
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      height: var(--tg-viewport-stable-height, 100vh);
+    }
+    .game-canvas-container {
+      position: relative;
+      width: 100%;
+      max-width: 920px;
+      aspect-ratio: 16 / 9;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 1rem;
+    }
+    .touch-btn {
+      touch-action: none;
+      user-select: none;
+    }
+  </style>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 flex flex-col items-center justify-between min-h-screen p-2 sm:p-4 overflow-hidden">
 
-<div id="rotatePrompt">
-    <h2>Переверніть пристрій 🔄</h2>
-    <p>Гра оптимізована для горизонтального екрану</p>
-</div>
+  <header class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-2 mb-1 px-2">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center font-black text-slate-900 text-xl shadow-lg shadow-yellow-500/30">
+        🏐
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          Jelly Volley <span id="onlineBadge" class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold uppercase">ШІ</span>
+        </h1>
+        <p class="text-xs text-slate-400">Фізичний аркадний волейбол у Telegram</p>
+      </div>
+    </div>
 
-<div id="gameContainer">
-    <canvas id="gameCanvas" width="800" height="450"></canvas>
-    
-    <button id="btnInGameMenu" class="hidden" onclick="returnToMenu()">Меню</button>
-    <button id="btnPause" class="hidden" onclick="togglePause()">⏸</button>
+    <div class="flex items-center gap-2 flex-wrap text-xs">
+      <button id="modeBtn" class="bg-slate-800 hover:bg-slate-700 active:scale-95 transition px-3 py-1.5 rounded-lg border border-slate-700 font-medium flex items-center gap-1.5">
+        <span id="modeIcon">🤖</span> <span id="modeText">Режим: vs ШІ</span>
+      </button>
+      <button id="onlineMenuBtn" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition px-3 py-1.5 rounded-lg font-medium text-white shadow-sm flex items-center gap-1">
+        🌐 <span>Онлайн з другом</span>
+      </button>
+      <button id="soundBtn" class="bg-slate-800 hover:bg-slate-700 active:scale-95 transition px-3 py-1.5 rounded-lg border border-slate-700 font-medium">
+        🔊 Звук
+      </button>
+      <button id="resetBtn" class="bg-rose-600/80 hover:bg-rose-600 active:scale-95 transition px-3 py-1.5 rounded-lg font-medium text-white shadow-sm">
+        🔄 Скинути
+      </button>
+    </div>
+  </header>
 
-    <div id="menuScreen" class="overlay">
-        <h1>VOLLEY SMASH</h1>
+  <main class="w-full flex flex-col items-center justify-center flex-grow">
+    <div class="game-canvas-container bg-slate-950 rounded-2xl overflow-hidden border border-slate-800">
+      <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+      <!-- UI Overlay -->
+      <div id="uiOverlay" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 transition-opacity duration-200">
         
-        <div class="menu-buttons" id="mainMenuBtns">
-            <button onclick="showDifficulty()">Грати проти ШІ (PvE)</button>
-            <button class="btn-white" onclick="showOnlineMenu()">Онлайн Гра з другом</button>
-        </div>
-        
-        <div class="menu-buttons hidden" id="diffMenuBtns">
-            <button onclick="startGame('ai', 'easy')">Легко</button>
-            <button onclick="startGame('ai', 'normal')">Нормально</button>
-            <button onclick="startGame('ai', 'hard')">Важко</button>
-            <button class="btn-white" onclick="hideDifficulty()">← Назад</button>
+        <!-- Меню вибору онлайн гри -->
+        <div id="onlineModal" class="hidden bg-slate-900/95 border border-indigo-500/40 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full">
+          <h2 class="text-2xl font-black text-indigo-400 mb-2">ГРА З ДРУГОМ</h2>
+          <p class="text-xs text-slate-300 mb-6">Створіть приватну кімнату або приєднайтеся за кодом</p>
+          
+          <div id="onlineChoiceGroup" class="flex flex-col gap-3">
+            <button id="btnCreateRoom" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-500/20 active:scale-95">
+              Створити кімнату
+            </button>
+            <button id="btnShowJoin" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition border border-slate-700 active:scale-95">
+              Увійти за кодом
+            </button>
+            <button id="btnCloseOnline" class="w-full py-2 text-slate-400 hover:text-white transition text-xs">
+              ← Назад до меню
+            </button>
+          </div>
+
+          <!-- Поле введення коду -->
+          <div id="joinCodeGroup" class="hidden flex flex-col gap-3">
+            <input type="text" id="roomCodeInput" placeholder="КОД КІМНАТИ" maxlength="5" class="w-full py-3 px-4 bg-slate-950 border-2 border-indigo-500/50 rounded-xl text-center text-xl font-black tracking-widest uppercase text-white focus:outline-none focus:border-indigo-400">
+            <button id="btnJoinRoom" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-500/20 active:scale-95">
+              Підключитися
+            </button>
+            <button id="btnBackToChoice" class="w-full py-2 text-slate-400 hover:text-white transition text-xs">
+              ← Назад
+            </button>
+          </div>
         </div>
 
-        <div class="menu-buttons hidden" id="onlineMenuBtns">
-            <button onclick="createRoom()">Створити кімнату</button>
-            <button onclick="showJoinMenu()">Увійти за кодом</button>
-            <button class="btn-white" onclick="hideOnlineMenu()">← Назад</button>
+        <!-- Головна картка подачі/фінішу -->
+        <div id="mainCard" class="bg-slate-900/90 border border-slate-700 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full">
+          <h2 id="overlayTitle" class="text-3xl font-black text-amber-400 mb-2">JELLY VOLLEY</h2>
+          <p id="overlayMessage" class="text-sm text-slate-300 mb-6 leading-relaxed">
+            Перебийте м'яч через сітку! Максимум 3 торкання на сторону. Гра триває до 7 очок.
+          </p>
+          <button id="startPlayBtn" class="w-full py-3 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/25 transition transform active:scale-95 text-base">
+            Почати розіграш
+          </button>
         </div>
 
-        <div class="menu-buttons hidden" id="joinMenuBtns">
-            <input type="text" id="roomCodeInput" placeholder="Код (AX55)" maxlength="5">
-            <button onclick="joinRoom()">Підключитись</button>
-            <button class="btn-white" onclick="hideJoinMenu()">← Назад</button>
-        </div>
+      </div>
     </div>
 
-    <div id="pauseScreen" class="overlay hidden">
-        <h1>ПАУЗА</h1>
-        <div class="menu-buttons">
-            <button onclick="togglePause()">Продовжити</button>
-            <button class="btn-white" onclick="returnToMenu()">В Головне Меню</button>
-        </div>
+    <div class="w-full max-w-4xl mt-2 px-2 flex flex-col md:flex-row justify-between items-center gap-1 text-xs text-slate-400">
+      <div class="flex items-center gap-4 flex-wrap">
+        <div><span class="font-bold text-emerald-400">Гравець 1:</span> <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700">A</kbd> <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700">D</kbd> - рух, <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700">W</kbd> - стрибок</div>
+        <div id="p2Help" class="hidden"><span class="font-bold text-rose-400">Гравець 2:</span> <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700">←</kbd> <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700">→</kbd>, <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700">↑</kbd> - стрибок</div>
+      </div>
+      <div id="roomCodeDisplay" class="font-mono text-indigo-400 font-bold"></div>
     </div>
 
-    <div id="gameOverScreen" class="overlay hidden">
-        <h1 id="winnerText">WINNER!</h1>
-        <p id="finalScore" style="font-size: 1.5rem; margin-bottom: 25px; color: #FFF; font-weight: bold; text-shadow: 2px 2px 0 #000; text-align: center;"></p>
-        <button onclick="returnToMenu()">В Головне Меню</button>
+    <!-- Віртуальний геймпад для мобільних пристроїв -->
+    <div id="touchControls" class="w-full max-w-md flex justify-between items-center gap-4 mt-2 px-3 sm:hidden">
+      <div class="flex gap-2">
+        <button id="touchLeft" class="touch-btn w-14 h-14 bg-slate-800 active:bg-slate-700 border border-slate-700 rounded-2xl flex items-center justify-center text-2xl active:scale-90 transition shadow-md">
+          ◀
+        </button>
+        <button id="touchRight" class="touch-btn w-14 h-14 bg-slate-800 active:bg-slate-700 border border-slate-700 rounded-2xl flex items-center justify-center text-2xl active:scale-90 transition shadow-md">
+          ▶
+        </button>
+      </div>
+      <div>
+        <button id="touchJump" class="touch-btn w-16 h-14 bg-amber-500 active:bg-amber-400 text-slate-950 font-bold rounded-2xl flex items-center justify-center text-lg active:scale-90 transition shadow-lg shadow-amber-500/20">
+          Стрибок
+        </button>
+      </div>
     </div>
+  </main>
 
-    <div id="controlsP1" class="controls-container hidden">
-        <div class="left-right-group">
-            <div class="touch-btn" id="btnLeftP1">←</div>
-            <div class="touch-btn" id="btnRightP1">→</div>
-        </div>
-        <div class="touch-btn" id="btnJumpP1">↑</div>
-    </div>
-</div>
+  <script>
+    // --- Ініціалізація Telegram WebApp ---
+    let tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.expand();
+      tg.ready();
+    }
 
-<script src="/socket.io/socket.io.js"></script>
+    function triggerHaptic(type = 'medium') {
+      try {
+        if (tg?.HapticFeedback) {
+          if (type === 'heavy' || type === 'medium' || type === 'light') {
+            tg.HapticFeedback.impactOccurred(type);
+          } else if (type === 'success') {
+            tg.HapticFeedback.notificationOccurred('success');
+          }
+        }
+      } catch (e) {}
+    }
 
-<script>
-    let tg = window.Telegram.WebApp;
-    tg.expand(); 
-    tg.ready();  
-
+    // --- Мережа (Socket.IO) ---
     const socket = io();
-    let myRole = null; 
-    let roomId = null; 
+    let isOnline = false;
+    let myRole = null; // 'p1' або 'p2'
+    let roomId = null;
+
+    let soundEnabled = true;
+    let synthHit, synthPoint;
+
+    function initAudio() {
+      if (synthHit) return;
+      try {
+        synthHit = new Tone.MembraneSynth({
+          pitchDecay: 0.05,
+          octaves: 3,
+          oscillator: { type: 'sine' },
+          envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.1 }
+        }).toDestination();
+        synthHit.volume.value = -6;
+
+        synthPoint = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 0.02, decay: 0.2, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+        synthPoint.volume.value = -8;
+      } catch (e) {
+        console.warn('Audio Init Failed', e);
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        if (Tone.context.state !== 'running') {
+          Tone.start();
+        }
+        if (!synthHit) initAudio();
+
+        if (type === 'blob') {
+          synthHit.triggerAttackRelease('C3', '16n');
+        } else if (type === 'ground' || type === 'net') {
+          synthHit.triggerAttackRelease('G1', '32n');
+        } else if (type === 'score') {
+          synthPoint.triggerAttackRelease(['C5', 'E5', 'G5'], '8n');
+        } else if (type === 'whistle') {
+          synthPoint.triggerAttackRelease(['B5', 'D6'], '16n');
+        }
+      } catch (e) {}
+    }
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    let shakeFrames = 0;
-    let lastTime = 0; 
-    let scoreScale = 1.0; // Для анімації збільшення рахунку
+    const GAME_WIDTH = 960;
+    const GAME_HEIGHT = 540;
+    const FLOOR_Y = 460;
+    const GRAVITY = 0.55;
+    const BALL_GRAVITY = 0.32;
+    const WIN_SCORE = 7;
 
-    // --- Анімація тексту (ГОЛ, СЕТ) ---
-    let notification = { text: "", alpha: 0, scale: 1, color: "#FFF" };
-    function showNotification(text, color) {
-        notification.text = text;
-        notification.alpha = 1.2; // Трохи більше 1, щоб текст довше висів
-        notification.scale = 0.5;
-        notification.color = color;
-    }
+    const NET = {
+      x: GAME_WIDTH / 2 - 8,
+      y: FLOOR_Y - 145,
+      width: 16,
+      height: 145,
+      capRadius: 8
+    };
 
-    // --- 8-BIT АУДІО СИСТЕМА ---
-    let audioCtx = null; 
-    let bgmStarted = false;
-    let bgmStep = 0;
-    
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
-    
-    function playNote(freq, type, startTime, duration, vol) {
-        if(!audioCtx) return; 
-        const osc = audioCtx.createOscillator(); 
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.type = type; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(vol, startTime); 
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-        osc.start(startTime); osc.stop(startTime + duration);
-    }
-
-    function startContinuousBGM() {
-        if (bgmStarted) return;
-        initAudio();
-        bgmStarted = true;
-        
-        const melody = [
-            392.00, 392.00, 587.33, 587.33, 659.25, 659.25, 587.33, 0,
-            523.25, 523.25, 493.88, 493.88, 440.00, 440.00, 392.00, 0,
-            587.33, 587.33, 523.25, 523.25, 493.88, 493.88, 440.00, 0,
-            587.33, 587.33, 523.25, 523.25, 493.88, 493.88, 440.00, 0 
-        ];
-        const bass = [
-            196.00, 196.00, 196.00, 196.00, 
-            130.81, 130.81, 130.81, 130.81, 
-            146.83, 146.83, 146.83, 146.83, 
-            146.83, 146.83, 146.83, 146.83  
-        ];
-
-        setInterval(() => {
-            if(audioCtx && audioCtx.state === 'running') {
-                let freq = melody[bgmStep % melody.length];
-                if (freq > 0) playNote(freq, 'square', audioCtx.currentTime, 0.15, 0.04);
-                
-                if (bgmStep % 2 === 0) {
-                    let bassFreq = bass[Math.floor((bgmStep % melody.length) / 8)];
-                    playNote(bassFreq, 'square', audioCtx.currentTime, 0.25, 0.06);
-                }
-                bgmStep++;
-            }
-        }, 180); 
-    }
-
-    window.addEventListener('touchstart', startContinuousBGM, {once:true});
-    window.addEventListener('mousedown', startContinuousBGM, {once:true});
-
-    function playSound(type) {
-        if (!audioCtx) return; const now = audioCtx.currentTime;
-        if (type === 'jump') { 
-            playNote(300, 'square', now, 0.15, 0.1); playNote(450, 'square', now+0.05, 0.1, 0.05); 
-        } 
-        else if (type === 'hit') { 
-            playNote(800, 'square', now, 0.1, 0.15); playNote(1200, 'square', now+0.05, 0.1, 0.1); 
-        } 
-        else if (type === 'smash') { 
-            playNote(200, 'sawtooth', now, 0.15, 0.3); playNote(100, 'sawtooth', now, 0.2, 0.3); 
-        } 
-        else if (type === 'wall') { 
-            playNote(250, 'triangle', now, 0.1, 0.1); 
-        } 
-        else if (type === 'score') { 
-            // 8-бітний звук монетки/очка
-            playNote(987.77, 'square', now, 0.1, 0.15); 
-            playNote(1318.51, 'square', now+0.1, 0.3, 0.15); 
-            tg.HapticFeedback.notificationOccurred('success'); 
-        } 
-        else if (type === 'set_win') { 
-            // 8-бітний переможний джингл (швидка мелодія)
-            playNote(523.25, 'square', now, 0.1, 0.15);      // C5
-            playNote(659.25, 'square', now + 0.1, 0.1, 0.15); // E5
-            playNote(783.99, 'square', now + 0.2, 0.1, 0.15); // G5
-            playNote(1046.50, 'square', now + 0.3, 0.4, 0.15); // C6
-            tg.HapticFeedback.notificationOccurred('success'); 
-        } 
-        else if (type === 'match_win') { 
-            // Епічна 8-бітна фанфара для фіналу партії
-            playNote(523.25, 'square', now, 0.15, 0.15);       // C5
-            playNote(523.25, 'square', now + 0.15, 0.15, 0.15); // C5
-            playNote(523.25, 'square', now + 0.30, 0.15, 0.15); // C5
-            playNote(783.99, 'square', now + 0.45, 0.4, 0.15);  // G5
-            playNote(659.25, 'square', now + 0.85, 0.2, 0.15);  // E5
-            playNote(1046.50, 'square', now + 1.05, 0.6, 0.15); // C6
-            tg.HapticFeedback.notificationOccurred('success'); 
-        } 
-        else if (type === 'whistle') {
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'square';
-            osc.frequency.setValueAtTime(1500, now); osc.frequency.linearRampToValueAtTime(2000, now + 0.3);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.001, now + 0.4);
-            osc.start(now); osc.stop(now + 0.4);
-        }
-    }
-
-    socket.on('playerRole', (role) => { myRole = role; });
-
-    socket.on('gameReady', () => {
-        document.getElementById('winnerText').innerText = "";
-        document.getElementById('gameOverScreen').classList.add('hidden');
-        document.getElementById('controlsP1').classList.remove('hidden');
-        document.getElementById('btnInGameMenu').classList.remove('hidden');
-        document.getElementById('btnPause').classList.remove('hidden');
-        
-        p1.isAI = false; p2.isAI = false; 
-        score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 };
-        p1.x = p1.startX; p2.x = p2.startX; p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
-        particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); 
-    });
-
-    socket.on('updateOpponent', (data) => {
-        let opp = data.role === 'p1' ? p1 : p2;
-        opp.targetX = data.x; opp.targetY = data.y; 
-        opp.tilt = data.tilt; opp.squash = data.squash; opp.stretch = data.stretch;
-    });
-
-    socket.on('updateBall', (data) => {
-        if (myRole === 'p2') { ball.targetX = data.x; ball.targetY = data.y; ball.vx = data.vx; ball.vy = data.vy; }
-    });
-
-    socket.on('syncState', (data) => {
-        if (myRole === 'p2') {
-            score = data.score; sets = data.sets; p1.radius = data.p1Radius; p2.radius = data.p2Radius;
-            if (data.sound) playSound(data.sound);
-            if (data.shake) shakeFrames = data.shake;
-            
-            // Якщо був гол/перемога — запускаємо анімацію тексту
-            if (!data.isGameOver && data.pointWinner) {
-                scoreScale = 1.5; // Підстрибування рахунку
-                let notifText = data.isSetWin ? "СЕТ ЗАКІНЧЕНО!" : "ГОЛ!";
-                let notifColor = (data.pointWinner === 'p1') ? "#FF4500" : "#1E90FF";
-                if (data.isSetWin) notifColor = "#FFD700";
-                showNotification(notifText, notifColor);
-            }
-            
-            if (data.isGameOver) checkMatchWin(data.winner);
-        }
-    });
-    
-    socket.on('gameEvent', (data) => {
-        if (myRole === 'p2') {
-            if (data.type === 'hit' || data.type === 'smash') { 
-                playSound(data.type); 
-                if (data.type === 'smash') { shakeFrames = 15; tg.HapticFeedback.impactOccurred('heavy'); } 
-                else { tg.HapticFeedback.impactOccurred('medium'); }
-                let p = data.pName === 'p1' ? p1 : p2; p.hitTimer = 5; spawnDust(ball.x, ball.y + ball.radius, data.type === 'smash' ? 15 : 5, '#FFF'); 
-            }
-            if (data.type === 'wall') playSound('wall');
-            if (data.type === 'jump') { playSound('jump'); let p = data.pName === 'p1' ? p1 : p2; spawnDust(p.x, p.y + p.radius, 10, '#DEB887'); }
-        }
-    });
-
+    let is2Player = false;
+    let gameState = 'ready'; 
+    let scoreP1 = 0;
+    let scoreP2 = 0;
+    let server = 1; 
+    let hitsP1 = 0;
+    let hitsP2 = 0;
+    let announcementText = '';
+    let announcementTimer = 0;
     let particles = [];
-    class Dust {
-        constructor(x, y, color) { 
-            this.x = x; this.y = y; this.vx = (Math.random() - 0.5) * 6; this.vy = Math.random() * -4; 
-            this.life = 1.0; this.size = Math.random() * 8 + 4; this.color = color;
-        }
-        update(timeScale) { this.x += this.vx * timeScale; this.y += this.vy * timeScale; this.life -= 0.05 * timeScale; }
-        draw() { 
-            ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.life);
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
-            ctx.globalAlpha = 1.0;
-        }
-    }
-    function spawnDust(x, y, count=10, color='#DEB887') { for(let i=0; i<count; i++) particles.push(new Dust(x, y, color)); }
 
-    const GRAVITY = 0.6; const PTS_TO_WIN_SET = 7; const SETS_TO_WIN_MATCH = 3;
-    let gameState = 'menu'; let difficulty = 'normal';
-    let score = { p1: 0, p2: 0 }; let sets = { p1: 0, p2: 0 };
-    const net = { x: 395, y: 250, width: 10, height: 200 };
+    const keys = {
+      p1Left: false,
+      p1Right: false,
+      p1Up: false,
+      p2Left: false,
+      p2Right: false,
+      p2Up: false
+    };
 
-    class Player {
-        constructor(x, color, isAI = false) {
-            this.startX = x; this.x = x; this.y = 350; this.targetX = x; this.targetY = 350;
-            this.baseRadius = 45; this.radius = this.baseRadius;
-            this.vx = 0; this.vy = 0; this.jumpPower = -12; this.color = color; this.isAI = isAI; this.isGrounded = true;
-            this.speed = 6.0; this.squash = 1; this.stretch = 1; this.tilt = 0; this.hitTimer = 0;
-            this.jumpCooldown = 0; 
+    class Jelly {
+      constructor(id, x, color, eyeOffsetX) {
+        this.id = id;
+        this.baseX = x;
+        this.x = x;
+        this.y = FLOOR_Y;
+        this.targetX = x;
+        this.targetY = FLOOR_Y;
+        this.vx = 0;
+        this.vy = 0;
+        this.radius = 48;
+        this.speed = 6.2;
+        this.jumpForce = -13.5;
+        this.isGrounded = true;
+        this.color = color;
+        this.eyeOffsetX = eyeOffsetX;
+        this.scaleX = 1;
+        this.scaleY = 1;
+      }
+
+      reset(x) {
+        this.x = x;
+        this.y = FLOOR_Y;
+        this.targetX = x;
+        this.targetY = FLOOR_Y;
+        this.vx = 0;
+        this.vy = 0;
+        this.isGrounded = true;
+        this.scaleX = 1;
+        this.scaleY = 1;
+      }
+
+      update(ball, isLocalControl = true) {
+        if (!isLocalControl && isOnline) {
+          // Мережевий смузинг
+          this.x += (this.targetX - this.x) * 0.4;
+          this.y += (this.targetY - this.y) * 0.4;
+          return;
         }
 
-        updateAI(ball, timeScale) {
-            let aiSpeed = 5.0; let reactionDistance = 70; let jumpChance = 1;
-            if (difficulty === 'easy') { aiSpeed = 3.5; reactionDistance = 50; jumpChance = 0.5; } 
-            else if (difficulty === 'hard') { aiSpeed = 7.0; reactionDistance = 100; jumpChance = 1; }
-            
-            if (this.jumpCooldown > 0) this.jumpCooldown -= timeScale;
+        this.x += this.vx;
+        this.vy += GRAVITY;
+        this.y += this.vy;
 
-            if (ball.x > 400) { 
-                if (this.x < ball.x - 5) this.vx = aiSpeed; else if (this.x > ball.x + 5) this.vx = -aiSpeed; else this.vx = 0;
-                
-                if (ball.vy > 0 && ball.y > 100 && ball.y < 340 && this.isGrounded && Math.abs(this.x - ball.x) < reactionDistance) {
-                    if (this.jumpCooldown <= 0 && Math.random() <= jumpChance) { 
-                        this.vy = this.jumpPower; this.isGrounded = false; 
-                        spawnDust(this.x, this.y + this.radius, 10, '#DEB887'); playSound('jump'); 
-                        this.jumpCooldown = 45; 
-                    }
-                }
-            } else { 
-                if (this.x < 550) this.vx = aiSpeed; else if (this.x > 570) this.vx = -aiSpeed; else this.vx = 0; 
-            }
+        if (this.y >= FLOOR_Y) {
+          if (!this.isGrounded) {
+            this.scaleX = 1.25;
+            this.scaleY = 0.75;
+          }
+          this.y = FLOOR_Y;
+          this.vy = 0;
+          this.isGrounded = true;
+        } else {
+          this.isGrounded = false;
         }
 
-        update(ball, isLocalControl, timeScale) {
-            if (this.isAI && isLocalControl) this.updateAI(ball, timeScale);
-            
-            if (isLocalControl || this.isAI) {
-                let currentGravity = GRAVITY;
-                if (!this.isGrounded && Math.abs(this.vy) < 2.5) { currentGravity *= 0.55; }
+        this.scaleX += (1 - this.scaleX) * 0.15;
+        this.scaleY += (1 - this.scaleY) * 0.15;
 
-                this.vy += currentGravity * timeScale; 
-                this.x += this.vx * timeScale; 
-                this.y += this.vy * timeScale; 
-                this.tilt = this.vx * 0.03;
-                
-                if (!this.isGrounded) { this.stretch = 1.1; this.squash = 0.9; } 
-                else { this.stretch += (1 - this.stretch) * 0.2; this.squash += (1 - this.squash) * 0.2; }
-                if (this.hitTimer > 0) { this.stretch = 0.8; this.squash = 1.2; this.hitTimer -= timeScale; }
-                
-                if (this.y + this.radius >= canvas.height) {
-                    if (!this.isGrounded && this.vy > 5) { spawnDust(this.x, canvas.height, 10, '#DEB887'); this.stretch = 0.8; this.squash = 1.2; }
-                    this.y = canvas.height - this.radius; this.vy = 0; this.isGrounded = true;
-                } else { this.isGrounded = false; }
-                
-                if (this.x < net.x) { if (this.x - this.radius < 0) this.x = this.radius; if (this.x + this.radius > net.x) this.x = net.x - this.radius; } 
-                else { if (this.x - this.radius < net.x + net.width) this.x = net.x + net.width + this.radius; if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius; }
-            } else {
-                this.x += (this.targetX - this.x) * 0.4 * timeScale;
-                this.y += (this.targetY - this.y) * 0.4 * timeScale;
-            }
+        if (this.id === 1) {
+          if (this.x - this.radius < 20) this.x = 20 + this.radius;
+          if (this.x + this.radius > NET.x) this.x = NET.x - this.radius;
+        } else {
+          if (this.x - this.radius < NET.x + NET.width) this.x = NET.x + NET.width + this.radius;
+          if (this.x + this.radius > GAME_WIDTH - 20) this.x = GAME_WIDTH - 20 - this.radius;
         }
-        draw() {
-            ctx.save(); 
-            ctx.translate(this.x, this.y); 
-            ctx.rotate(this.tilt); 
-            
-            // Якщо це Гравець 2 (справа), розвертаємо його обличчям вліво
-            if (this.startX > 400) { ctx.scale(-1, 1); }
-            
-            ctx.scale(this.squash, this.stretch); 
-            
-            // Основне тіло
-            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2);
-            ctx.fillStyle = this.color; ctx.fill();
-            ctx.lineWidth = 3; ctx.strokeStyle = '#222'; ctx.stroke();
-            
-            // Біле пузо (зміщене вперед до сітки)
-            ctx.beginPath(); ctx.arc(10, 10, this.radius * 0.65, 0, Math.PI*2);
-            ctx.fillStyle = '#FFF'; ctx.fill();
-            
-            // Око
-            ctx.beginPath(); ctx.arc(14, -14, 9, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
-            ctx.beginPath(); ctx.arc(18, -14, 4, 0, Math.PI*2); ctx.fillStyle = '#000'; ctx.fill();
-            
-            // Дзьоб
-            ctx.fillStyle = '#FFD700'; ctx.beginPath(); 
-            ctx.moveTo(25, -4); ctx.lineTo(48, 2); ctx.lineTo(25, 8); 
-            ctx.fill(); ctx.stroke();
-            
-            ctx.restore();
-        }
+      }
+
+      draw(ctx, ball) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.scale(this.scaleX, this.scaleY);
+
+        ctx.beginPath();
+        const shadowWidth = (this.radius * 1.6) * (1 - (FLOOR_Y - this.y) / 400);
+        ctx.ellipse(0, 0, Math.max(10, shadowWidth), 12, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, Math.PI, 0, false);
+        ctx.lineTo(this.radius, 0);
+        ctx.lineTo(-this.radius, 0);
+        ctx.closePath();
+
+        const grad = ctx.createRadialGradient(-10, -25, 5, 0, -10, this.radius);
+        grad.addColorStop(0, this.color.highlight);
+        grad.addColorStop(0.6, this.color.main);
+        grad.addColorStop(1, this.color.shadow);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = this.color.border;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(-this.radius * 0.4, -this.radius * 0.6, 12, 6, -Math.PI / 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.fill();
+
+        const eyeX = this.eyeOffsetX;
+        const eyeY = -this.radius * 0.45;
+        const angleToBall = Math.atan2(ball.y - (this.y + eyeY), ball.x - (this.x + eyeX));
+        const pupilDist = 4.5;
+        const pupilX = Math.cos(angleToBall) * pupilDist;
+        const pupilY = Math.sin(angleToBall) * pupilDist;
+
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, 10, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#1e293b';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(eyeX + pupilX, eyeY + pupilY, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#090d16';
+        ctx.fill();
+
+        ctx.restore();
+      }
     }
 
     class Ball {
-        constructor() { this.radius = 22; this.rotation = 0; this.lastHitter = null; this.crossedNet = false; this.trail = []; this.reset(1); }
-        reset(server) { this.x = server === 1 ? 200 : 600; this.y = 80; this.targetX = this.x; this.targetY = this.y; this.vx = 0; this.vy = 0; this.speedMultiplier = 1; this.lastHitter = null; this.crossedNet = false; this.trail = []; }
+      constructor() {
+        this.radius = 19;
+        this.reset(1);
+      }
 
-        update(p1, p2, isHost, timeScale) {
-            if (isHost) { 
-                this.vy += GRAVITY * 0.46 * timeScale; 
-                this.x += this.vx * timeScale; 
-                this.y += this.vy * timeScale; 
+      reset(servingPlayer) {
+        this.x = servingPlayer === 1 ? 240 : GAME_WIDTH - 240;
+        this.y = 170;
+        this.targetX = this.x;
+        this.targetY = this.y;
+        this.vx = 0;
+        this.vy = 0;
+        this.lastHitter = 0;
+        this.rotation = 0;
+      }
+
+      serve(servingPlayer) {
+        this.vx = servingPlayer === 1 ? 2.5 : -2.5;
+        this.vy = -3;
+      }
+
+      update(isHost = true) {
+        if (!isHost && isOnline) {
+          this.x += (this.targetX - this.x) * 0.5;
+          this.y += (this.targetY - this.y) * 0.5;
+          this.rotation += this.vx * 0.05;
+          return;
+        }
+
+        this.vy += BALL_GRAVITY;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.rotation += this.vx * 0.05;
+
+        if (this.y - this.radius < 0) {
+          this.y = this.radius;
+          this.vy = -this.vy * 0.85;
+          playSound('net');
+        }
+
+        if (this.x - this.radius < 0) {
+          this.x = this.radius;
+          this.vx = -this.vx * 0.88;
+          playSound('net');
+          createParticles(this.x, this.y, '#f8fafc', 6);
+        }
+
+        if (this.x + this.radius > GAME_WIDTH) {
+          this.x = GAME_WIDTH - this.radius;
+          this.vx = -this.vx * 0.88;
+          playSound('net');
+          createParticles(this.x, this.y, '#f8fafc', 6);
+        }
+
+        this.checkNetCollision();
+      }
+
+      checkNetCollision() {
+        const capX = NET.x + NET.width / 2;
+        const capY = NET.y;
+        const dx = this.x - capX;
+        const dy = this.y - capY;
+        const distToCap = Math.hypot(dx, dy);
+
+        if (distToCap < this.radius + NET.capRadius) {
+          const normalX = dx / distToCap;
+          const normalY = dy / distToCap;
+          this.x = capX + normalX * (this.radius + NET.capRadius);
+          this.y = capY + normalY * (this.radius + NET.capRadius);
+
+          const dot = this.vx * normalX + this.vy * normalY;
+          this.vx = (this.vx - 2 * dot * normalX) * 0.82;
+          this.vy = (this.vy - 2 * dot * normalY) * 0.82;
+          playSound('net');
+          createParticles(this.x, this.y, '#e2e8f0', 8);
+          return;
+        }
+
+        if (this.y > NET.y && this.y < FLOOR_Y) {
+          if (this.x + this.radius > NET.x && this.x - this.radius < NET.x + NET.width) {
+            if (this.x < NET.x + NET.width / 2) {
+              this.x = NET.x - this.radius;
+              this.vx = -Math.abs(this.vx) * 0.85;
             } else {
-                this.x += (this.targetX - this.x) * 0.5 * timeScale;
-                this.y += (this.targetY - this.y) * 0.5 * timeScale;
+              this.x = NET.x + NET.width + this.radius;
+              this.vx = Math.abs(this.vx) * 0.85;
             }
+            playSound('net');
+            createParticles(this.x, this.y, '#e2e8f0', 7);
+          }
+        }
+      }
 
-            let speed = Math.abs(this.vx) + Math.abs(this.vy);
-            if (speed > 10) { this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 8) this.trail.shift(); } else if (this.trail.length > 0) { this.trail.shift(); }
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
 
-            if (isHost) {
-                if (this.lastHitter === p1 && !this.crossedNet && this.x > net.x + net.width) { this.crossedNet = true; p1.radius *= 1.1; } 
-                else if (this.lastHitter === p2 && !this.crossedNet && this.x < net.x) { this.crossedNet = true; p2.radius *= 1.1; }
-
-                if (this.x - this.radius <= 0) { this.x = this.radius; this.vx *= -0.95; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
-                if (this.x + this.radius >= canvas.width) { this.x = canvas.width - this.radius; this.vx *= -0.95; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
-                if (this.y - this.radius <= 0) { this.y = this.radius; this.vy *= -0.95; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
-                if (this.x + this.radius > net.x && this.x - this.radius < net.x + net.width && this.y + this.radius > net.y) {
-                    if (this.y < net.y + 10) { this.vy *= -0.95; this.y = net.y - this.radius; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); } 
-                    else { this.vx *= -1; this.x = this.x < net.x ? net.x - this.radius : net.x + net.width + this.radius; playSound('wall'); if(myRole) socket.emit('gameEvent', {roomId, type: 'wall'}); }
-                }
-                
-                // ГОЛ! М'яч падає на підлогу
-                if (this.y + this.radius >= canvas.height) {
-                    shakeFrames = 10;
-                    scoreScale = 1.5; // Анімація підстрибування цифр рахунку
-                    
-                    let sndToPlay = 'score'; let isGameOver = false; let winner = ''; let nextServer = 1;
-                    let pointWinner = '';
-                    let isSetWin = false;
-
-                    if (this.x < net.x) { score.p2++; nextServer = 1; pointWinner = 'p2'; } 
-                    else { score.p1++; nextServer = 2; pointWinner = 'p1'; }
-                    
-                    if (score.p1 >= PTS_TO_WIN_SET || score.p2 >= PTS_TO_WIN_SET) {
-                        isSetWin = true;
-                        if (score.p1 > score.p2) sets.p1++; else sets.p2++; 
-                        score.p1 = 0; score.p2 = 0;
-                        if (sets.p1 >= SETS_TO_WIN_MATCH || sets.p2 >= SETS_TO_WIN_MATCH) { 
-                            sndToPlay = 'match_win'; isGameOver = true; winner = sets.p1 >= SETS_TO_WIN_MATCH ? 'p1' : 'p2'; 
-                        } else { 
-                            sndToPlay = 'set_win'; 
-                        }
-                    }
-                    
-                    playSound(sndToPlay); 
-                    this.reset(nextServer);
-                    p1.x = p1.startX; p1.y = 350; p1.radius = p1.baseRadius; p2.x = p2.startX; p2.y = 350; p2.radius = p2.baseRadius;
-                    
-                    // Запуск анімації тексту локально (для хоста або PvE)
-                    if (!isGameOver) {
-                        let notifText = isSetWin ? "СЕТ ЗАКІНЧЕНО!" : "ГОЛ!";
-                        let notifColor = (pointWinner === 'p1') ? "#FF4500" : "#1E90FF";
-                        if (isSetWin) notifColor = "#FFD700";
-                        showNotification(notifText, notifColor);
-                    }
-
-                    if (myRole === 'p1') { 
-                        socket.emit('syncState', { roomId, score, sets, p1Radius: p1.radius, p2Radius: p2.radius, sound: sndToPlay, shake: 10, isGameOver, winner, pointWinner, isSetWin }); 
-                    }
-                    if (isGameOver) { checkMatchWin(winner); return; }
-                }
-                this.checkPlayerCollision(p1); this.checkPlayerCollision(p2);
-            }
+        const shadowDist = FLOOR_Y - this.y;
+        if (shadowDist > 0) {
+          ctx.save();
+          ctx.translate(0, shadowDist);
+          ctx.beginPath();
+          const sRad = Math.max(6, this.radius * (1 - shadowDist / 500));
+          ctx.ellipse(0, 0, sRad, sRad * 0.35, 0, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+          ctx.fill();
+          ctx.restore();
         }
 
-        checkPlayerCollision(p) {
-            let dx = this.x - p.x; let dy = this.y - p.y; let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < this.radius + p.radius) {
-                let isSmash = !p.isGrounded && Math.abs(p.vy) < 3.5 && this.y < p.y - 10;
-                let bounceForce = isSmash ? 17 : 12; 
-                let angle = Math.atan2(dy, dx); 
-                this.vx = Math.cos(angle) * bounceForce; this.vy = Math.sin(angle) * bounceForce; 
-                
-                if (this.vy > 0 && !isSmash) this.vy = -this.vy - 3;
-                else if (isSmash && this.vy > 0) this.vy = Math.max(this.vy, 5); 
-                
-                this.speedMultiplier += 0.05; this.vx *= this.speedMultiplier; this.vy *= this.speedMultiplier;
-                
-                let overlap = (this.radius + p.radius) - distance; this.x += Math.cos(angle) * overlap; this.y += Math.sin(angle) * overlap;
-                this.lastHitter = p; this.crossedNet = false; p.hitTimer = 5; 
-                
-                let hitType = isSmash ? 'smash' : 'hit';
-                playSound(hitType); spawnDust(this.x, this.y + this.radius, isSmash ? 20 : 5, '#FFF');
-                if (isSmash) { shakeFrames = 15; tg.HapticFeedback.impactOccurred('heavy'); } 
-                else { tg.HapticFeedback.impactOccurred('medium'); }
-                if (myRole === 'p1') socket.emit('gameEvent', { roomId, type: hitType, pName: p === p1 ? 'p1' : 'p2' });
-            }
-        }
+        ctx.rotate(this.rotation);
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#1e293b';
+        ctx.stroke();
 
-        draw() {
-            for(let i=0; i<this.trail.length; i++) {
-                let t = this.trail[i]; let ratio = (i + 1) / this.trail.length;
-                ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * ratio, 0, Math.PI*2); 
-                ctx.fillStyle = `rgba(255, 255, 255, ${0.5 * ratio})`; ctx.fill();
-            }
-            ctx.save(); ctx.translate(this.x, this.y); this.rotation += this.vx * 0.05; ctx.rotate(this.rotation);
-            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); 
-            ctx.fillStyle = '#FFF'; ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.3)'; 
-            ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#333'; ctx.stroke();
-            
-            // Волейбольні лінії
-            ctx.shadowBlur = 0; ctx.strokeStyle = '#CD5C5C'; ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.moveTo(-15, -10); ctx.lineTo(15, 10); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(-15, 10); ctx.lineTo(15, -10); ctx.stroke();
-            ctx.strokeStyle = '#20B2AA';
-            ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI, false); ctx.stroke();
-            ctx.restore();
-        }
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, -0.7, 0.7);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 2.4, 3.8);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(-this.radius, 0);
+        ctx.lineTo(this.radius, 0);
+        ctx.moveTo(0, -this.radius);
+        ctx.lineTo(0, this.radius);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#334155';
+        ctx.stroke();
+
+        ctx.restore();
+      }
     }
 
-    let p1 = new Player(150, '#FF4500'); 
-    let p2 = new Player(650, '#1E90FF', true); 
-    let ball = new Ball();
-    const keys = { a: false, d: false, w: false };
+    function createParticles(x, y, color, count = 10) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 7,
+          vy: (Math.random() - 0.5) * 7,
+          size: Math.random() * 4 + 2,
+          color: color,
+          alpha: 1,
+          life: 25 + Math.random() * 15
+        });
+      }
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.15;
+        p.alpha -= 1 / p.life;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    function drawParticles(ctx) {
+      ctx.save();
+      for (const p of particles) {
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    const player1 = new Jelly(1, 220, {
+      main: '#10b981',
+      highlight: '#6ee7b7',
+      shadow: '#047857',
+      border: '#064e3b'
+    }, 14);
+
+    const player2 = new Jelly(2, GAME_WIDTH - 220, {
+      main: '#ef4444',
+      highlight: '#fca5a5',
+      shadow: '#b91c1c',
+      border: '#7f1d1d'
+    }, -14);
+
+    const ball = new Ball();
+
+    function checkBlobBallCollision(blob) {
+      const dx = ball.x - blob.x;
+      const dy = ball.y - blob.y;
+      const dist = Math.hypot(dx, dy);
+      const minDist = ball.radius + blob.radius;
+
+      if (dist < minDist && ball.y <= blob.y + 10) {
+        const normalX = dx / (dist || 1);
+        const normalY = dy / (dist || 1);
+
+        ball.x = blob.x + normalX * minDist;
+        ball.y = blob.y + normalY * minDist;
+
+        const hitAngle = Math.atan2(dy, dx);
+        const baseSpeed = 10.8;
+
+        let impulseX = Math.cos(hitAngle) * baseSpeed + blob.vx * 0.45;
+        let impulseY = Math.sin(hitAngle) * baseSpeed + Math.min(blob.vy * 0.35, 0);
+
+        if (impulseY > -4.5) impulseY = -4.5;
+
+        if (blob.id === 1) {
+          hitsP1++;
+          hitsP2 = 0;
+          if (hitsP1 > 3) {
+            triggerRoundEnd(2, 'Понад 3 торкання!');
+            return;
+          }
+        } else {
+          hitsP2++;
+          hitsP1 = 0;
+          if (hitsP2 > 3) {
+            triggerRoundEnd(1, 'Понад 3 торкання!');
+            return;
+          }
+        }
+
+        ball.vx = impulseX;
+        ball.vy = impulseY;
+        ball.lastHitter = blob.id;
+
+        blob.scaleX = 0.82;
+        blob.scaleY = 1.25;
+
+        playSound('blob');
+        triggerHaptic('medium');
+        createParticles(ball.x, ball.y, blob.color.highlight, 12);
+
+        if (isOnline && myRole === 'p1') {
+          socket.emit('gameEvent', { roomId, type: 'hit', pName: blob.id === 1 ? 'p1' : 'p2' });
+        }
+      }
+    }
+
+    function updateAI() {
+      if (is2Player || isOnline) return;
+
+      const ai = player2;
+      const targetX = (ball.x > NET.x) ? ball.x : GAME_WIDTH - 200;
+      const distToBallX = targetX - ai.x;
+
+      if (Math.abs(distToBallX) > 12) {
+        ai.vx = Math.sign(distToBallX) * ai.speed * 0.92;
+      } else {
+        ai.vx = 0;
+      }
+
+      const ballInZone = ball.x > NET.x + 20 && ball.x < GAME_WIDTH - 30;
+      const ballApproaching = ball.vy > 0 && ball.y > 230 && ball.y < 380;
+
+      if (ballInZone && ballApproaching && Math.abs(distToBallX) < 45 && ai.isGrounded) {
+        if (Math.random() < 0.88) {
+          ai.vy = ai.jumpForce;
+          ai.isGrounded = false;
+        }
+      }
+    }
+
+    function triggerRoundEnd(winner, reason = '') {
+      if (gameState !== 'playing') return;
+      gameState = 'scored';
+      playSound('score');
+      triggerHaptic('success');
+
+      if (winner === 1) {
+        scoreP1++;
+        server = 1;
+        announcementText = `Очко Зеленому! ${reason}`;
+      } else {
+        scoreP2++;
+        server = 2;
+        announcementText = `Очко Червоному! ${reason}`;
+      }
+
+      announcementTimer = 90;
+      createParticles(ball.x, ball.y, winner === 1 ? '#10b981' : '#ef4444', 25);
+
+      const isGameOver = scoreP1 >= WIN_SCORE || scoreP2 >= WIN_SCORE;
+
+      if (isOnline && myRole === 'p1') {
+        socket.emit('syncState', {
+          roomId,
+          scoreP1,
+          scoreP2,
+          server,
+          announcementText,
+          isGameOver,
+          winner
+        });
+      }
+
+      if (isGameOver) {
+        setTimeout(handleMatchWon, 1200);
+      } else {
+        setTimeout(() => {
+          resetForServe();
+        }, 1500);
+      }
+    }
+
+    function resetForServe() {
+      hitsP1 = 0;
+      hitsP2 = 0;
+      player1.reset(220);
+      player2.reset(GAME_WIDTH - 220);
+      ball.reset(server);
+      gameState = 'ready';
+
+      document.getElementById('onlineModal').classList.add('hidden');
+      document.getElementById('mainCard').classList.remove('hidden');
+
+      if (isOnline) {
+        const isMyServe = (myRole === 'p1' && server === 1) || (myRole === 'p2' && server === 2);
+        document.getElementById('overlayTitle').innerText = isMyServe ? "ВАША ПОДАЧА!" : "ПОДАЄ СУПЕРНИК";
+        document.getElementById('overlayMessage').innerText = `Рахунок: ${scoreP1} - ${scoreP2}`;
+        document.getElementById('startPlayBtn').style.display = isMyServe ? 'block' : 'none';
+        document.getElementById('startPlayBtn').innerText = "Подати м'яч";
+      } else {
+        document.getElementById('startPlayBtn').style.display = 'block';
+        document.getElementById('overlayTitle').innerText = server === 1 ? "ПОДАЄ ЗЕЛЕНИЙ" : "ПОДАЄ ЧЕРВОНИЙ";
+        document.getElementById('overlayMessage').innerText = `Рахунок: ${scoreP1} - ${scoreP2}. Натисніть кнопку або Стрибок для подачі.`;
+        document.getElementById('startPlayBtn').innerText = "Подати м'яч";
+      }
+
+      document.getElementById('uiOverlay').style.display = 'flex';
+    }
+
+    function handleMatchWon() {
+      gameState = 'gameover';
+      let winnerName = "";
+      if (isOnline) {
+        winnerName = (scoreP1 >= WIN_SCORE && myRole === 'p1') || (scoreP2 >= WIN_SCORE && myRole === 'p2') ? "ВИ ПЕРЕМОГЛИ!" : "СУПЕРНИК ПЕРЕМІГ!";
+      } else {
+        winnerName = scoreP1 >= WIN_SCORE ? "Зелений гравець" : (is2Player ? "Червоний гравець" : "Комп'ютер");
+      }
+
+      document.getElementById('overlayTitle').innerText = "МАТЧ ЗАВЕРШЕНО!";
+      document.getElementById('overlayMessage').innerText = `${winnerName} Рахунок: ${scoreP1} : ${scoreP2}`;
+      document.getElementById('startPlayBtn').innerText = "Грати знову";
+      document.getElementById('startPlayBtn').style.display = 'block';
+      document.getElementById('uiOverlay').style.display = 'flex';
+    }
+
+    function startServe() {
+      if (gameState === 'ready') {
+        if (isOnline) {
+          const isMyServe = (myRole === 'p1' && server === 1) || (myRole === 'p2' && server === 2);
+          if (!isMyServe) return;
+          socket.emit('serveBall', { roomId, server });
+        }
+        document.getElementById('uiOverlay').style.display = 'none';
+        gameState = 'playing';
+        ball.serve(server);
+        playSound('whistle');
+      } else if (gameState === 'gameover') {
+        resetFullMatch();
+      }
+    }
+
+    function resetFullMatch() {
+      scoreP1 = 0;
+      scoreP2 = 0;
+      server = 1;
+      resetForServe();
+    }
+
+    // --- Socket.IO Події ---
+    socket.on('playerRole', (role) => {
+      myRole = role;
+    });
+
+    socket.on('gameReady', () => {
+      isOnline = true;
+      document.getElementById('onlineBadge').innerText = "ОНЛАЙН";
+      document.getElementById('onlineBadge').className = "text-xs px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-semibold uppercase";
+      document.getElementById('onlineModal').classList.add('hidden');
+      document.getElementById('mainCard').classList.remove('hidden');
+      resetFullMatch();
+    });
+
+    socket.on('updateOpponent', (data) => {
+      const opp = data.role === 'p1' ? player1 : player2;
+      opp.targetX = data.x;
+      opp.targetY = data.y;
+    });
+
+    socket.on('updateBall', (data) => {
+      if (myRole === 'p2') {
+        ball.targetX = data.x;
+        ball.targetY = data.y;
+        ball.vx = data.vx;
+        ball.vy = data.vy;
+      }
+    });
+
+    socket.on('syncState', (data) => {
+      if (myRole === 'p2') {
+        scoreP1 = data.scoreP1;
+        scoreP2 = data.scoreP2;
+        server = data.server;
+        announcementText = data.announcementText;
+        announcementTimer = 90;
+        if (data.isGameOver) {
+          handleMatchWon();
+        } else {
+          resetForServe();
+        }
+      }
+    });
+
+    socket.on('ballServed', (data) => {
+      if (gameState === 'ready') {
+        document.getElementById('uiOverlay').style.display = 'none';
+        gameState = 'playing';
+        server = data.server;
+        ball.serve(server);
+        playSound('whistle');
+      }
+    });
+
+    socket.on('gameEvent', (data) => {
+      if (myRole === 'p2' && data.type === 'hit') {
+        playSound('blob');
+        triggerHaptic('medium');
+      }
+    });
+
+    function drawEnvironment() {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+      skyGrad.addColorStop(0, '#38bdf8');
+      skyGrad.addColorStop(0.5, '#7dd3fc');
+      skyGrad.addColorStop(1, '#fef08a');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+      ctx.beginPath();
+      ctx.arc(GAME_WIDTH / 2, 85, 42, 0, Math.PI * 2);
+      ctx.fillStyle = '#fde047';
+      ctx.shadowColor = '#facc15';
+      ctx.shadowBlur = 30;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, FLOOR_Y - 80, GAME_WIDTH, 45);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(0, FLOOR_Y - 35, GAME_WIDTH, 5);
+
+      const sandGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, GAME_HEIGHT);
+      sandGrad.addColorStop(0, '#fcd34d');
+      sandGrad.addColorStop(1, '#d97706');
+      ctx.fillStyle = sandGrad;
+      ctx.fillRect(0, FLOOR_Y, GAME_WIDTH, GAME_HEIGHT - FLOOR_Y);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(20, FLOOR_Y);
+      ctx.lineTo(GAME_WIDTH - 20, FLOOR_Y);
+      ctx.stroke();
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(NET.x, NET.y, NET.width, NET.height);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(NET.x, NET.y, NET.width, NET.height);
+
+      ctx.beginPath();
+      ctx.arc(NET.x + NET.width / 2, NET.y, NET.capRadius, 0, Math.PI * 2);
+      ctx.fillStyle = '#f87171';
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
+      for (let y = NET.y + 10; y < FLOOR_Y; y += 12) {
+        ctx.moveTo(NET.x, y);
+        ctx.lineTo(NET.x + NET.width, y);
+      }
+      ctx.stroke();
+    }
+
+    function drawHUD() {
+      ctx.save();
+      ctx.font = '800 48px Inter, sans-serif';
+      ctx.textAlign = 'center';
+
+      ctx.fillStyle = '#10b981';
+      ctx.fillText(scoreP1, GAME_WIDTH * 0.25, 70);
+
+      ctx.fillStyle = '#ef4444';
+      ctx.fillText(scoreP2, GAME_WIDTH * 0.75, 70);
+
+      ctx.font = '600 13px Inter, sans-serif';
+      ctx.fillStyle = '#065f46';
+      ctx.fillText(`Торкань: ${hitsP1} / 3`, GAME_WIDTH * 0.25, 96);
+
+      ctx.fillStyle = '#991b1b';
+      ctx.fillText(`Торкань: ${hitsP2} / 3`, GAME_WIDTH * 0.75, 96);
+
+      if (announcementTimer > 0) {
+        ctx.font = '700 24px Inter, sans-serif';
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(announcementText, GAME_WIDTH / 2, 170);
+        announcementTimer--;
+      }
+
+      ctx.restore();
+    }
+
+    function updateGame() {
+      // Керування Гравець 1
+      if (!isOnline || myRole === 'p1') {
+        player1.vx = 0;
+        if (keys.p1Left) player1.vx = -player1.speed;
+        if (keys.p1Right) player1.vx = player1.speed;
+        if (keys.p1Up && player1.isGrounded) {
+          player1.vy = player1.jumpForce;
+          player1.isGrounded = false;
+        }
+      }
+
+      // Керування Гравець 2
+      if (isOnline) {
+        if (myRole === 'p2') {
+          player2.vx = 0;
+          if (keys.p1Left) player2.vx = -player2.speed;
+          if (keys.p1Right) player2.vx = player2.speed;
+          if (keys.p1Up && player2.isGrounded) {
+            player2.vy = player2.jumpForce;
+            player2.isGrounded = false;
+          }
+        }
+      } else if (is2Player) {
+        player2.vx = 0;
+        if (keys.p2Left) player2.vx = -player2.speed;
+        if (keys.p2Right) player2.vx = player2.speed;
+        if (keys.p2Up && player2.isGrounded) {
+          player2.vy = player2.jumpForce;
+          player2.isGrounded = false;
+        }
+      } else {
+        updateAI();
+      }
+
+      const isHost = !isOnline || myRole === 'p1';
+      player1.update(ball, !isOnline || myRole === 'p1');
+      player2.update(ball, !isOnline || myRole === 'p2');
+
+      if (isOnline) {
+        const me = myRole === 'p1' ? player1 : player2;
+        socket.emit('playerMoved', { roomId, role: myRole, x: me.x, y: me.y });
+        if (myRole === 'p1') {
+          socket.emit('ballSync', { roomId, x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy });
+        }
+      }
+
+      if (gameState === 'playing') {
+        ball.update(isHost);
+
+        if (isHost) {
+          checkBlobBallCollision(player1);
+          checkBlobBallCollision(player2);
+
+          if (ball.y + ball.radius >= FLOOR_Y) {
+            ball.y = FLOOR_Y - ball.radius;
+            playSound('ground');
+            createParticles(ball.x, ball.y, '#f59e0b', 14);
+
+            if (ball.x < NET.x + NET.width / 2) {
+              triggerRoundEnd(2, 'М\'яч впав у Зеленого!');
+            } else {
+              triggerRoundEnd(1, 'М\'яч впав у Червоного!');
+            }
+          }
+        }
+      }
+
+      updateParticles();
+    }
+
+    function renderGame() {
+      ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+      drawEnvironment();
+      player1.draw(ctx, ball);
+      player2.draw(ctx, ball);
+      ball.draw(ctx);
+      drawParticles(ctx);
+      drawHUD();
+    }
+
+    function gameLoop() {
+      updateGame();
+      renderGame();
+      requestAnimationFrame(gameLoop);
+    }
 
     window.addEventListener('keydown', (e) => {
-        let k = e.key; let pRef = (myRole === 'p2') ? p2 : p1;
-        if (k==='a' || k==='A' || k==='ф' || k==='Ф' || e.code === 'ArrowLeft') keys.a = true;
-        if (k==='d' || k==='D' || k==='в' || k==='В' || e.code === 'ArrowRight') keys.d = true;
-        if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') { 
-            keys.w = true; 
-            if (pRef.isGrounded && gameState === 'playing') {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#DEB887'); playSound('jump');
-                if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
-            }
-        }
-    });
-    window.addEventListener('keyup', (e) => {
-        let k = e.key;
-        if (k==='a' || k==='A' || k==='ф' || k==='Ф' || e.code === 'ArrowLeft') keys.a = false;
-        if (k==='d' || k==='D' || k==='в' || k==='В' || e.code === 'ArrowRight') keys.d = false;
-        if (k==='w' || k==='W' || k==='ц' || k==='Ц' || e.code === 'ArrowUp') keys.w = false;
+      if (!synthHit && soundEnabled) initAudio();
+
+      if (e.code === 'KeyA') keys.p1Left = true;
+      if (e.code === 'KeyD') keys.p1Right = true;
+      if (e.code === 'KeyW' || e.code === 'Space') {
+        keys.p1Up = true;
+        if (gameState === 'ready') startServe();
+      }
+
+      if (e.code === 'ArrowLeft') keys.p2Left = true;
+      if (e.code === 'ArrowRight') keys.p2Right = true;
+      if (e.code === 'ArrowUp') {
+        keys.p2Up = true;
+        if (gameState === 'ready') startServe();
+      }
     });
 
-    const addTouch = (id, key) => {
-        const btn = document.getElementById(id);
-        const startAction = (e) => { 
-            e.preventDefault(); if(gameState !== 'playing') return;
-            keys[key] = true; let pRef = (myRole === 'p2') ? p2 : p1;
-            if(key==='w' && pRef.isGrounded) {
-                pRef.vy = pRef.jumpPower; pRef.isGrounded = false; spawnDust(pRef.x, pRef.y + pRef.radius, 10, '#DEB887'); playSound('jump');
-                if(myRole) socket.emit('gameEvent', { roomId, type: 'jump', pName: myRole });
-            }
-            btn.style.background = 'rgba(255, 255, 255, 0.6)';
-        };
-        const endAction = (e) => { e.preventDefault(); keys[key] = false; btn.style.background = 'rgba(255, 255, 255, 0.25)'; };
-        
-        btn.addEventListener('touchstart', startAction, {passive: false});
-        btn.addEventListener('touchend', endAction, {passive: false});
-        btn.addEventListener('touchcancel', endAction, {passive: false});
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'KeyA') keys.p1Left = false;
+      if (e.code === 'KeyD') keys.p1Right = false;
+      if (e.code === 'KeyW' || e.code === 'Space') keys.p1Up = false;
+
+      if (e.code === 'ArrowLeft') keys.p2Left = false;
+      if (e.code === 'ArrowRight') keys.p2Right = false;
+      if (e.code === 'ArrowUp') keys.p2Up = false;
+    });
+
+    document.getElementById('startPlayBtn').addEventListener('click', () => {
+      if (!synthHit && soundEnabled) initAudio();
+      startServe();
+    });
+
+    document.getElementById('modeBtn').addEventListener('click', () => {
+      if (isOnline) return;
+      is2Player = !is2Player;
+      document.getElementById('modeText').innerText = is2Player ? "Режим: 2 Гравці (Локально)" : "Режим: vs ШІ";
+      document.getElementById('modeIcon').innerText = is2Player ? "👥" : "🤖";
+      document.getElementById('p2Help').classList.toggle('hidden', !is2Player);
+      resetFullMatch();
+    });
+
+    document.getElementById('soundBtn').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundBtn').innerText = soundEnabled ? "🔊 Звук" : "🔇 Без звуку";
+      if (soundEnabled && !synthHit) initAudio();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', resetFullMatch);
+
+    // --- UI Логіка Онлайн Кімнат ---
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+      return code;
+    }
+
+    document.getElementById('onlineMenuBtn').addEventListener('click', () => {
+      document.getElementById('mainCard').classList.add('hidden');
+      document.getElementById('onlineModal').classList.remove('hidden');
+      document.getElementById('onlineChoiceGroup').classList.remove('hidden');
+      document.getElementById('joinCodeGroup').classList.add('hidden');
+      document.getElementById('uiOverlay').style.display = 'flex';
+    });
+
+    document.getElementById('btnCloseOnline').addEventListener('click', () => {
+      document.getElementById('onlineModal').classList.add('hidden');
+      document.getElementById('mainCard').classList.remove('hidden');
+    });
+
+    document.getElementById('btnShowJoin').addEventListener('click', () => {
+      document.getElementById('onlineChoiceGroup').classList.add('hidden');
+      document.getElementById('joinCodeGroup').classList.remove('hidden');
+    });
+
+    document.getElementById('btnBackToChoice').addEventListener('click', () => {
+      document.getElementById('joinCodeGroup').classList.add('hidden');
+      document.getElementById('onlineChoiceGroup').classList.remove('hidden');
+    });
+
+    document.getElementById('btnCreateRoom').addEventListener('click', () => {
+      if (!synthHit && soundEnabled) initAudio();
+      roomId = generateRoomCode();
+      socket.emit('joinRoom', roomId);
+      document.getElementById('roomCodeDisplay').innerText = `Код кімнати: ${roomId}`;
+      document.getElementById('overlayTitle').innerText = "ОЧІКУВАННЯ...";
+      document.getElementById('overlayMessage').innerText = `Надішліть код другу: ${roomId}`;
+      document.getElementById('startPlayBtn').style.display = 'none';
+      document.getElementById('onlineModal').classList.add('hidden');
+      document.getElementById('mainCard').classList.remove('hidden');
+    });
+
+    document.getElementById('btnJoinRoom').addEventListener('click', () => {
+      const input = document.getElementById('roomCodeInput').value.toUpperCase().trim();
+      if (input.length < 3) {
+        alert('Введіть коректний код!');
+        return;
+      }
+      if (!synthHit && soundEnabled) initAudio();
+      roomId = input;
+      socket.emit('joinRoom', roomId);
+      document.getElementById('roomCodeDisplay').innerText = `Код кімнати: ${roomId}`;
+      document.getElementById('overlayTitle').innerText = "ПІДКЛЮЧЕННЯ...";
+      document.getElementById('overlayMessage').innerText = `Підключення до ${roomId}...`;
+      document.getElementById('startPlayBtn').style.display = 'none';
+      document.getElementById('onlineModal').classList.add('hidden');
+      document.getElementById('mainCard').classList.remove('hidden');
+    });
+
+    // Touch button events
+    const bindTouch = (id, keyName) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const start = (e) => {
+        e.preventDefault();
+        if (!synthHit && soundEnabled) initAudio();
+        keys[keyName] = true;
+        if (keyName === 'p1Up' && gameState === 'ready') startServe();
+      };
+      const end = (e) => {
+        e.preventDefault();
+        keys[keyName] = false;
+      };
+      el.addEventListener('touchstart', start, { passive: false });
+      el.addEventListener('touchend', end, { passive: false });
+      el.addEventListener('mousedown', start);
+      el.addEventListener('mouseup', end);
+      el.addEventListener('mouseleave', end);
     };
 
-    addTouch('btnLeftP1', 'a'); addTouch('btnRightP1', 'd'); addTouch('btnJumpP1', 'w');
+    bindTouch('touchLeft', 'p1Left');
+    bindTouch('touchRight', 'p1Right');
+    bindTouch('touchJump', 'p1Up');
 
-    function showDifficulty() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('diffMenuBtns').classList.remove('hidden'); }
-    function hideDifficulty() { document.getElementById('mainMenuBtns').classList.remove('hidden'); document.getElementById('diffMenuBtns').classList.add('hidden'); }
-    function showOnlineMenu() { document.getElementById('mainMenuBtns').classList.add('hidden'); document.getElementById('onlineMenuBtns').classList.remove('hidden'); }
-    function hideOnlineMenu() { document.getElementById('mainMenuBtns').classList.remove('hidden'); document.getElementById('onlineMenuBtns').classList.add('hidden'); }
-    function showJoinMenu() { document.getElementById('onlineMenuBtns').classList.add('hidden'); document.getElementById('joinMenuBtns').classList.remove('hidden'); }
-    function hideJoinMenu() { document.getElementById('onlineMenuBtns').classList.remove('hidden'); document.getElementById('joinMenuBtns').classList.add('hidden'); }
-
-    function generateRoomCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let code = '';
-        for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-        return code;
-    }
-
-    function createRoom() {
-        initAudio(); myRole = null; roomId = generateRoomCode(); socket.emit('joinRoom', roomId);
-        document.getElementById('menuScreen').classList.add('hidden');
-        document.getElementById('winnerText').innerHTML = `КОД КІМНАТИ:<br><span style="color:#FFD700">${roomId}</span><br><br><span style="font-size:1.2rem; color:#FFF;">ОЧІКУВАННЯ СУПЕРНИКА...</span>`;
-        document.getElementById('finalScore').innerText = ""; document.getElementById('gameOverScreen').classList.remove('hidden');
-    }
-
-    function joinRoom() {
-        const input = document.getElementById('roomCodeInput').value.toUpperCase().trim();
-        if (input.length < 3) { alert("Введіть коректний код!"); return; }
-        initAudio(); myRole = null; roomId = input; socket.emit('joinRoom', roomId);
-        document.getElementById('menuScreen').classList.add('hidden');
-        document.getElementById('winnerText').innerHTML = "ПІДКЛЮЧЕННЯ...";
-        document.getElementById('finalScore').innerText = ""; document.getElementById('gameOverScreen').classList.remove('hidden');
-    }
-
-    function startGame(mode, diff = 'normal') {
-        initAudio(); difficulty = diff; myRole = null; p1.isAI = false; p2.isAI = true; 
-        document.getElementById('controlsP1').classList.remove('hidden'); document.getElementById('menuScreen').classList.add('hidden');
-        document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.remove('hidden'); document.getElementById('btnPause').classList.remove('hidden');
-        score = { p1: 0, p2: 0 }; sets = { p1: 0, p2: 0 }; p1.x = p1.startX; p2.x = p2.startX; p1.radius = p1.baseRadius; p2.radius = p2.baseRadius;
-        particles = []; ball.reset(1); gameState = 'playing'; playSound('whistle'); 
-    }
-
-    function togglePause() {
-        if (gameState === 'playing') {
-            gameState = 'paused'; document.getElementById('pauseScreen').classList.remove('hidden'); document.getElementById('controlsP1').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.add('hidden');
-        } else if (gameState === 'paused') {
-            gameState = 'playing'; document.getElementById('pauseScreen').classList.add('hidden'); document.getElementById('controlsP1').classList.remove('hidden'); document.getElementById('btnPause').classList.remove('hidden'); document.getElementById('btnInGameMenu').classList.remove('hidden'); 
-        }
-    }
-
-    function checkMatchWin(networkWinner = null) {
-        playSound('whistle'); setTimeout(() => playSound('match_win'), 500); tg.HapticFeedback.notificationOccurred('success');
-        let text = myRole ? (networkWinner === myRole ? "ВИ ПЕРЕМОГЛИ!" : "СУПЕРНИК ПЕРЕМІГ!") : (sets.p1 >= SETS_TO_WIN_MATCH ? "ВИ ПЕРЕМОГЛИ!" : "ШІ ПЕРЕМІГ!");
-        gameState = 'gameover'; document.getElementById('winnerText').innerText = text; document.getElementById('finalScore').innerText = `Сети: ${sets.p1} - ${sets.p2}`;
-        document.getElementById('gameOverScreen').classList.remove('hidden'); document.getElementById('controlsP1').classList.add('hidden'); document.getElementById('btnInGameMenu').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden');
-    }
-
-    function returnToMenu() {
-        gameState = 'menu';
-        document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('pauseScreen').classList.add('hidden');
-        document.getElementById('btnInGameMenu').classList.add('hidden'); document.getElementById('btnPause').classList.add('hidden'); document.getElementById('controlsP1').classList.add('hidden');
-        document.getElementById('diffMenuBtns').classList.add('hidden'); document.getElementById('onlineMenuBtns').classList.add('hidden'); document.getElementById('joinMenuBtns').classList.add('hidden');
-        document.getElementById('mainMenuBtns').classList.remove('hidden'); document.getElementById('menuScreen').classList.remove('hidden');
-    }
-
-    function drawScore() {
-        ctx.save();
-        ctx.translate(canvas.width / 2, 70);
-        ctx.scale(scoreScale, scoreScale);
-        
-        ctx.font = '900 50px Courier New'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center'; 
-        ctx.shadowBlur = 5; ctx.shadowColor = '#000';
-        ctx.fillText(`${score.p1} - ${score.p2}`, 0, 0);
-        ctx.restore();
-        
-        ctx.save();
-        ctx.font = 'bold 20px Courier New'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center'; 
-        ctx.shadowBlur = 5; ctx.shadowColor = '#000';
-        ctx.fillText(`СЕТИ: ${sets.p1} - ${sets.p2}`, canvas.width / 2, 30);
-        ctx.restore();
-    }
-    
-    function drawNet() {
-        ctx.fillStyle = '#E2E8F0'; ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.5)'; 
-        ctx.fillRect(net.x, net.y, net.width, net.height);
-        
-        ctx.shadowBlur = 0; ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1;
-        for(let i=0; i<net.height; i+=15) {
-            ctx.beginPath(); ctx.moveTo(net.x, net.y + i); ctx.lineTo(net.x + net.width, net.y + i); ctx.stroke();
-        }
-        
-        ctx.beginPath(); ctx.arc(net.x + net.width/2, net.y, net.width/2, 0, Math.PI * 2); 
-        ctx.fillStyle = '#FF4500'; ctx.fill(); 
-    }
-
-    function gameLoop(timestamp) {
-        if (!lastTime) lastTime = timestamp;
-        let dt = (timestamp - lastTime) / 1000;
-        lastTime = timestamp;
-        if (dt > 0.1) dt = 0.1; 
-        let timeScale = dt * 60; 
-        
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Зменшення скейлу рахунку (ефект підстрибування)
-        if (scoreScale > 1.0) {
-            scoreScale -= 0.02 * timeScale;
-        } else {
-            scoreScale = 1.0;
-        }
-        
-        if (gameState === 'playing') {
-            let activePlayer = (myRole === 'p2') ? p2 : p1; 
-            if (keys.a) activePlayer.vx = -activePlayer.speed; else if (keys.d) activePlayer.vx = activePlayer.speed; else activePlayer.vx = 0;
-            
-            p1.update(ball, myRole !== 'p2', timeScale); 
-            p2.update(ball, myRole === 'p2' || p2.isAI, timeScale); 
-            
-            let isHost = (myRole !== 'p2'); ball.update(p1, p2, isHost, timeScale);
-
-            if (myRole) { socket.emit('playerMoved', { roomId: roomId, role: myRole, x: activePlayer.x, y: activePlayer.y, tilt: activePlayer.tilt, squash: activePlayer.squash, stretch: activePlayer.stretch }); }
-            if (myRole === 'p1') socket.emit('ballSync', { roomId: roomId, x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy });
-
-            for(let i=particles.length-1; i>=0; i--) { particles[i].update(timeScale); if(particles[i].life <= 0) particles.splice(i, 1); }
-        }
-        
-        if (gameState !== 'menu') { 
-            ctx.save();
-            if (shakeFrames > 0) { ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12); shakeFrames -= timeScale; }
-            particles.forEach(p => p.draw()); drawNet(); p1.draw(); p2.draw(); ball.draw(); drawScore(); 
-            ctx.restore();
-            
-            // Відмальовка анімації сповіщення (ГОЛ / СЕТ)
-            if (notification.alpha > 0) {
-                ctx.save();
-                ctx.translate(canvas.width / 2, canvas.height / 2 - 40);
-                notification.scale += (1.5 - notification.scale) * 0.1 * timeScale; // Плавне збільшення
-                ctx.scale(notification.scale, notification.scale);
-                ctx.font = '900 45px Courier New'; 
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                
-                // Прозорість
-                let drawAlpha = Math.min(1.0, notification.alpha);
-                
-                ctx.fillStyle = notification.color;
-                ctx.globalAlpha = drawAlpha;
-                ctx.shadowBlur = 10; ctx.shadowColor = '#000';
-                
-                ctx.fillText(notification.text, 0, 0);
-                ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.strokeText(notification.text, 0, 0);
-                
-                ctx.restore();
-                notification.alpha -= 0.015 * timeScale; // Плавне затухання
-            }
-        }
-        
-        requestAnimationFrame(gameLoop);
-    }
-    requestAnimationFrame(gameLoop);
-</script>
+    window.onload = () => {
+      gameLoop();
+    };
+  </script>
 </body>
 </html>
